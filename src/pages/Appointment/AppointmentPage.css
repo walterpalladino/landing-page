@@ -1,0 +1,230 @@
+/* ─────────────────────────────────────────────────────────
+   AppointmentPage — two-column layout
+   ───────────────────────────────────────────────────────── */
+
+.appt-page {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  min-height: 100svh;
+  padding-top: var(--nav-h); /* clear the fixed navbar */
+}
+
+/* ── Aside ─────────────────────────────────────────────── */
+.appt-page__aside {
+  background: var(--ink);
+  padding: 48px 48px 64px;
+  display: flex;
+  flex-direction: column;
+  /* Sticky so it stays in view while form scrolls */
+  position: sticky;
+  top: var(--nav-h);
+  height: calc(100svh - var(--nav-h));
+  overflow-y: auto;
+}
+
+.appt-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+  align-self: flex-start;
+}
+.appt-page__back:hover { color: var(--paper); }
+
+.appt-page__aside-content {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-top: 56px;
+  flex: 1;
+}
+
+.appt-page__logo-mark {
+  font-size: 36px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.appt-page__aside-title {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 3vw, 44px);
+  font-weight: 300;
+  line-height: 1.15;
+  color: var(--paper);
+}
+.appt-page__aside-title em {
+  font-style: italic;
+  color: var(--accent-light);
+}
+
+.appt-page__aside-body {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.appt-page__aside-details {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-top: 28px;
+  margin-top: auto;
+}
+
+.appt-page__aside-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 2px solid var(--accent);
+  padding-left: 14px;
+}
+
+.appt-page__aside-detail-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(138, 128, 112, 0.7);
+}
+
+.appt-page__aside-detail-value {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--paper);
+}
+
+/* ── Main / form area ──────────────────────────────────── */
+.appt-page__main {
+  background: var(--paper);
+  padding: clamp(48px, 6vw, 88px) clamp(32px, 6vw, 80px) 80px;
+  display: flex;
+  flex-direction: column;
+}
+
+.appt-page__header { margin-bottom: 48px; }
+
+.appt-page__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.appt-page__title {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 5vw, 60px);
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+/* ── Form ──────────────────────────────────────────────── */
+.appt-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 580px;
+}
+
+.appt-page__form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.appt-page__form-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+.appt-page__form-note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 300px;
+}
+
+/* ── Success state ─────────────────────────────────────── */
+.appt-page__success {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 540px;
+  animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.appt-page__success-icon {
+  font-size: 48px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.appt-page__success-title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 50px);
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.appt-page__success-body {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+.appt-page__success-body strong { color: var(--ink); font-weight: 500; }
+
+.appt-page__success-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .appt-page {
+    grid-template-columns: 1fr;
+    padding-top: var(--nav-h);
+  }
+
+  .appt-page__aside {
+    position: static;
+    height: auto;
+    padding: 40px clamp(20px, 5vw, 48px) 48px;
+  }
+
+  .appt-page__aside-content { padding-top: 36px; }
+  .appt-page__aside-details { margin-top: 28px; }
+
+  .appt-page__main {
+    padding: 48px clamp(20px, 5vw, 48px) 64px;
+  }
+}
+
+@media (max-width: 480px) {
+  .appt-page__form-row    { grid-template-columns: 1fr; }
+  .appt-page__form-footer { flex-direction: column; align-items: flex-start; }
+}

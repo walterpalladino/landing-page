@@ -1,0 +1,107 @@
+.services {
+  padding: var(--section-pad) 0;
+  background: var(--paper);
+}
+
+.section-header {
+  margin-bottom: clamp(48px, 6vw, 80px);
+  max-width: 540px;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.section-title em { font-style: italic; color: var(--accent); }
+
+.section-desc {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.services__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.service-card {
+  background: var(--cream);
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.service-card:hover                    { background: var(--ink); }
+.service-card:hover .service-card__title,
+.service-card:hover .service-card__desc { color: var(--paper); }
+.service-card:hover .service-card__link { color: var(--accent-light); }
+
+.service-card__img-wrap {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+.service-card__img {
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.6);
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), filter 0.6s;
+}
+.service-card:hover .service-card__img {
+  transform: scale(1.06);
+  filter: saturate(0.3) brightness(0.4);
+}
+
+.service-card__icon {
+  position: absolute;
+  top: 16px; left: 20px;
+  font-size: 20px;
+  color: var(--paper);
+  opacity: 0.7;
+  font-family: var(--font-mono);
+}
+
+.service-card__body { padding: 28px 28px 32px; }
+
+.service-card__title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 12px;
+  transition: color 0.3s;
+}
+.service-card__desc {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 20px;
+  transition: color 0.3s;
+}
+.service-card__link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  transition: color 0.3s;
+}
+
+@media (max-width: 900px) { .services__grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .services__grid { grid-template-columns: 1fr; } }
