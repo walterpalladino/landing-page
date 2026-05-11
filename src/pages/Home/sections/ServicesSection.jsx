@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { SERVICES } from "../../../services/contentService";
 import "./ServicesSection.css";
 
@@ -33,7 +34,13 @@ export default function ServicesSection() {
               <div className="service-card__body">
                 <h3 className="service-card__title">{service.title}</h3>
                 <p className="service-card__desc">{service.description}</p>
-                <span className="service-card__link">Learn more →</span>
+                <Link
+                  to={`/services/${service.slug}`}
+                  className="service-card__link"
+                  aria-label={`Learn more about ${service.title}`}
+                >
+                  Learn more →
+                </Link>
               </div>
             </article>
           ))}

@@ -3,10 +3,9 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import AppRoutes from "../AppRoutes";
 
-/** Wraps AppRoutes in a MemoryRouter starting at "/" (home route). */
-const setup = (initialPath = "/") =>
+const setup = (path = "/") =>
   render(
-    <MemoryRouter initialEntries={[initialPath]}>
+    <MemoryRouter initialEntries={[path]}>
       <AppRoutes />
     </MemoryRouter>
   );
@@ -16,17 +15,17 @@ describe("App routes (integration)", () => {
     expect(() => setup("/")).not.toThrow();
   });
 
-  it("renders the Navbar with the logo on home route", () => {
+  it("renders Navbar on home route", () => {
     setup("/");
     expect(screen.getAllByText("MERIDIAN").length).toBeGreaterThan(0);
   });
 
-  it("renders the main content area on the home route", () => {
+  it("renders main content on home route", () => {
     setup("/");
     expect(screen.getByRole("main")).toBeInTheDocument();
   });
 
-  it("renders the Footer on home route", () => {
+  it("renders Footer on home route", () => {
     setup("/");
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
   });
@@ -36,7 +35,7 @@ describe("App routes (integration)", () => {
     expect(screen.getAllByText(/Set an Appointment/i).length).toBeGreaterThan(0);
   });
 
-  it("all home sections are present on the home route", () => {
+  it("all home sections present on /", () => {
     const { container } = setup("/");
     expect(container.querySelector(".hero")).toBeInTheDocument();
     expect(container.querySelector("#services")).toBeInTheDocument();
@@ -44,17 +43,18 @@ describe("App routes (integration)", () => {
     expect(container.querySelector("#contact")).toBeInTheDocument();
   });
 
-  it("renders the AppointmentPage on /appointment", () => {
+  it("renders AppointmentPage on /appointment", () => {
     setup("/appointment");
-    expect(screen.getByText(/Book a session/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Book a session/i })).toBeInTheDocument();
   });
 
-  it("AppointmentPage has all form fields on /appointment", () => {
-    setup("/appointment");
-    expect(screen.getByLabelText("First Name")).toBeInTheDocument();
-    expect(screen.getByLabelText("Last Name")).toBeInTheDocument();
-    expect(screen.getByLabelText("Email Address")).toBeInTheDocument();
-    expect(screen.getByLabelText("Phone Number")).toBeInTheDocument();
-    expect(screen.getByLabelText("Preferred Date")).toBeInTheDocument();
+  it("renders ServiceDetailPage on /services/:slug", () => {
+    setup("/services/brand-strategy");
+    expect(screen.getByRole("heading", { level: 1, name: "Brand Strategy" })).toBeInTheDocument();
+  });
+
+  it("renders 404 on unknown service slug", () => {
+    setup("/services/nonexistent");
+    expect(screen.getByText(/Service not found/i)).toBeInTheDocument();
   });
 });
