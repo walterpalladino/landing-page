@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm }           from "../../hooks/useForm";
 import { useAvailableDates } from "../../hooks/useAvailableDates";
@@ -15,16 +14,15 @@ const INITIAL = {
   slot:      null,
 };
 
+/** Scrolls the main panel to the top so the success/form header is visible. */
+function scrollPanelToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 export default function AppointmentPage() {
   const navigate = useNavigate();
   const { values, submitted, handleChange, handleSubmit, reset } = useForm(INITIAL);
   const { dates, loading, error, refresh } = useAvailableDates();
-
-  // Scroll to the top of the page whenever the submitted state changes —
-  // both when the form is submitted (show success) and when reset (show form again).
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [submitted]);
 
   const handleSlotSelect = (selection) =>
     handleChange({ target: { name: "slot", value: selection } });
@@ -36,6 +34,17 @@ export default function AppointmentPage() {
     if (!slot) return "";
     const dateObj = dates.find((d) => d.date === slot.date);
     return `${slot.slot} — ${dateObj?.label ?? slot.date}`;
+  };
+
+  /** Submit: persist the form then scroll to top to reveal the success message. */
+  const onSubmit = handleSubmit(() => {
+    scrollPanelToTop();
+  });
+
+  /** Reset: clear form state then scroll to top to reveal the empty form. */
+  const handleReset = () => {
+    reset();
+    scrollPanelToTop();
   };
 
   return (
@@ -90,7 +99,7 @@ export default function AppointmentPage() {
               <strong>{values.email}</strong> within one business day.
             </p>
             <div className="appt-page__success-actions">
-              <Button variant="outline" onClick={reset}>Book another</Button>
+              <Button variant="outline" onClick={handleReset}>Book another</Button>
               <Button variant="primary" to="/">Back to home</Button>
             </div>
           </div>
@@ -98,7 +107,7 @@ export default function AppointmentPage() {
           /* ── Form ── */
           <form
             className="appt-page__form"
-            onSubmit={handleSubmit(() => {})}
+            onSubmit={onSubmit}
             noValidate
           >
             <div className="appt-page__form-row">

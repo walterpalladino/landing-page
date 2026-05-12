@@ -263,8 +263,45 @@ describe("AppointmentPage — scroll to top", () => {
 
     await user.click(screen.getByRole("button", { name: /book another/i }));
 
-    await waitFor(() =>
-      expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" })
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+  });
+
+  it("scrolls to top on every successive submission, not just the first", async () => {
+    const user = userEvent.setup();
+    const { container } = setup();
+
+    // --- First submission ---
+    await waitFor(() => screen.getByLabelText("First Name"));
+    await user.type(screen.getByLabelText("First Name"), "Jane");
+    await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
+    await waitFor(() => container.querySelector(".tsp__cell--available"));
+    fireEvent.click(container.querySelector(".tsp__cell--available"));
+    fireEvent.click(screen.getByRole("button", { name: /confirm slot/i }));
+    fireEvent.submit(
+      screen.getByRole("button", { name: /send request/i }).closest("form")
     );
+    await waitFor(() => screen.getByRole("button", { name: /book another/i }));
+
+    // Reset
+    window.scrollTo.mockClear();
+    await user.click(screen.getByRole("button", { name: /book another/i }));
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+
+    // --- Second submission ---
+    await waitFor(() => screen.getByLabelText("First Name"));
+    await user.type(screen.getByLabelText("First Name"), "Bob");
+    await user.type(screen.getByLabelText("Email Address"), "bob@example.com");
+    await waitFor(() => container.querySelector(".tsp__cell--available"));
+    fireEvent.click(container.querySelector(".tsp__cell--available"));
+    fireEvent.click(screen.getByRole("button", { name: /confirm slot/i }));
+
+    window.scrollTo.mockClear();
+    fireEvent.submit(
+      screen.getByRole("button", { name: /send request/i }).closest("form")
+    );
+    await waitFor(() =>
+      expect(screen.getByText(/Appointment request sent!/i)).toBeInTheDocument()
+    );
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
   });
 });
