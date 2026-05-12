@@ -56,13 +56,14 @@ src/
 │       ├── Input.jsx
 │       ├── Select.jsx
 │       ├── Textarea.jsx
-│       └── DatePicker.jsx
+│       └── TimeSlotPicker.jsx  # Interactive date/time grid for appointment booking
 ├── features/                   # Business-logic domains (auth, etc.)
 ├── hooks/                      # Reusable custom hooks
 │   ├── __tests__/
 │   ├── useScrolled.js          # Tracks scroll position for Navbar
 │   ├── useScrollToTop.js       # Scrolls to top on route change
-│   └── useForm.js              # Controlled-form state management
+│   ├── useForm.js              # Controlled-form state management
+│   └── useAvailableDates.js    # Fetches available slots from appointmentService
 ├── pages/
 │   ├── Home/                   # HomePage + four page sections
 │   │   ├── sections/
@@ -78,9 +79,10 @@ src/
 │   └── Appointment/            # Appointment booking page
 │       ├── __tests__/
 │       └── AppointmentPage.jsx
-├── services/                   # Static content & data access
+├── services/                   # Data access & external integrations
 │   ├── __tests__/
-│   └── contentService.js       # All copy, SERVICES, CLIENTS, getServiceBySlug()
+│   ├── contentService.js       # All copy, SERVICES, CLIENTS, getServiceBySlug()
+│   └── appointmentService.js   # Available dates/slots + appointment submission
 ├── store/                      # Global state (Zustand / Redux / Context)
 ├── utils/                      # Pure helpers
 │   ├── __tests__/
@@ -144,7 +146,7 @@ npm run test:watch
 npm run test:coverage
 ```
 
-The suite contains **193 tests across 22 files**, co-located with their source under `__tests__/` folders.
+The suite contains **252 tests across 25 files**, co-located with their source under `__tests__/` folders.
 
 ### Test coverage by area
 
@@ -153,12 +155,12 @@ The suite contains **193 tests across 22 files**, co-located with their source u
 | App routes | 1 | Home, `/services/:slug`, `/appointment`, 404 |
 | `ServiceDetailPage` | 1 | All 6 slugs, hero, highlights, deliverables, gallery, related cards, 404 fallback |
 | `HomePage` | 1 | All four sections present |
-| Home sections | 4 | Hero CTAs, service links, client stats, contact form flow |
-| `AppointmentPage` | 1 | Form fields, submission, success state, reset |
+| Home sections | 4 | Hero CTAs, service card links, client stats, contact form flow |
+| `AppointmentPage` | 1 | Loading/error/ready states, slot selection, submission, success, reset |
 | Common components | 3 | Navbar (scroll, mobile menu), Footer, ScrollToTop |
-| UI components | 5 | Button (all variants + `to`/`href`/`onClick`), Input, Select, Textarea, DatePicker |
-| Hooks | 3 | `useScrolled`, `useForm`, `useScrollToTop` |
-| Services | 1 | `contentService` data shape, `getServiceBySlug` |
+| UI components | 6 | Button (all variants + `to`/`href`/`onClick`), Input, Select, Textarea, TimeSlotPicker |
+| Hooks | 4 | `useScrolled`, `useForm`, `useScrollToTop`, `useAvailableDates` |
+| Services | 2 | `contentService` data & `getServiceBySlug`, `appointmentService` all exports |
 | Utils | 2 | `validators`, `formatters` |
 
 ---
@@ -211,6 +213,91 @@ To look up a service by slug in code, use the exported helper:
 ```js
 import { getServiceBySlug } from "./services/contentService";
 const service = getServiceBySlug("brand-strategy"); // returns the object or undefined
+```
+
+---
+
+## Appointment Page
+
+The appointment booking page (`/appointment`) lets users pick a time slot and submit their contact details.
+
+### Time slot picker
+
+The page uses `TimeSlotPicker` — a custom interactive grid component where columns represent days and rows represent time slots. Users click a cell to select it (only one at a time), then confirm or cancel with the action buttons. Available slots are visually distinct from unavailable ones, and the selected slot is highlighted in accent colour.
+
+```jsx
+<TimeSlotPicker
+  availableDates={[
+    { date: "2030-06-09", label: "Monday, June 9", slots: ["09:00", "10:00", "14:00"] },
+    { date: "2030-06-10", label: "Tuesday, June 10", slots: ["09:00", "15:00"] },
+  ]}
+  onSelect={(selection) => {}} // { date: "2030-06-09", slot: "09:00" }
+  onCancel={() => {}}
+/>
+```
+
+### Loading and error states
+
+The page handles three states while fetching available slots from `appointmentService`:
+
+- **Loading** — a spinner indicator is shown and the Submit button is disabled
+- **Error** — an error message appears with a **Retry** button that re-triggers the fetch
+- **Ready** — the `TimeSlotPicker` renders with the fetched dates and slots
+
+---
+
+## Appointment Service
+
+`src/services/appointmentService.js` is the single entry point for all appointment-related data. It is intentionally async so that swapping the local generator for a real HTTP call requires no changes in the rest of the app.
+
+### Exported API
+
+| Export | Signature | Description |
+|---|---|---|
+| `ALL_TIME_SLOTS` | `string[]` | Full list of candidate time slots (`"09:00"` … `"16:00"`) |
+| `formatDateLabel` | `(iso: string) => string` | Converts `"2030-06-10"` to `"Tuesday, June 10"` |
+| `computeAvailableSlots` | `(iso, slots) => string[]` | Returns the subset of slots available on a given date |
+| `buildAvailableDates` | `(options?) => DateEntry[]` | Builds N future weekdays — accepts `count`, `slots`, and `from` overrides |
+| `getAvailableDates` | `() => Promise<DateEntry[]>` | **Main async entry point** — fetches available dates for the picker |
+| `submitAppointment` | `(payload) => Promise<{ success: boolean }>` | Submits the appointment request; throws on missing required fields |
+
+### `DateEntry` shape
+
+```ts
+{
+  date:  string,    // ISO date — "YYYY-MM-DD"
+  label: string,    // Human-readable — "Monday, June 9"
+  slots: string[],  // Available time slots for this date — ["09:00", "10:00"]
+}
+```
+
+### Connecting a real backend
+
+Replace the bodies of `getAvailableDates` and `submitAppointment` with real `fetch` calls. The `useAvailableDates` hook and `AppointmentPage` component never need to change:
+
+```js
+// Before (simulated)
+export async function getAvailableDates() {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return buildAvailableDates();
+}
+
+// After (real API)
+export async function getAvailableDates() {
+  const res = await fetch("/api/appointments/available");
+  if (!res.ok) throw new Error("Failed to fetch available dates");
+  return res.json();
+}
+```
+
+### `useAvailableDates` hook
+
+Wraps `getAvailableDates()` with React state management. Returns `{ dates, loading, error, refresh }`. The `refresh()` function re-triggers the fetch — used by the Retry button in the error state. A cancellation guard prevents state updates on unmounted components.
+
+```js
+import { useAvailableDates } from "./hooks/useAvailableDates";
+
+const { dates, loading, error, refresh } = useAvailableDates();
 ```
 
 ---
@@ -307,4 +394,7 @@ https://<your-username>.github.io/landing-page
 | Stats row | `STATS` array in `contentService.js` |
 | Social links | `SOCIAL_LINKS` array in `contentService.js` |
 | Navigation links | `NAV_LINKS` array in `contentService.js` |
+| Available appointment slots | `ALL_TIME_SLOTS` in `appointmentService.js` |
+| Number of days shown in picker | `DAYS_AHEAD` constant in `appointmentService.js` |
+| Connect a real appointments API | Replace `getAvailableDates` and `submitAppointment` in `appointmentService.js` |
 | Global colours & fonts | CSS custom properties in `src/index.css` |
