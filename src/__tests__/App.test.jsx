@@ -48,6 +48,11 @@ describe("App routes (integration)", () => {
     expect(screen.getByRole("heading", { name: /Book a session/i })).toBeInTheDocument();
   });
 
+  it("renders AboutPage on /about", () => {
+    setup("/about");
+    expect(screen.getByRole("heading", { level: 1, name: /We are Meridian/i })).toBeInTheDocument();
+  });
+
   it("renders ServiceDetailPage on /services/:slug", () => {
     setup("/services/brand-strategy");
     expect(screen.getByRole("heading", { level: 1, name: "Brand Strategy" })).toBeInTheDocument();

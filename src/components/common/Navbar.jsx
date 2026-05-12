@@ -1,21 +1,24 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useScrolled } from "../../hooks/useScrolled";
-import { NAV_LINKS } from "../../services/contentService";
+import { NAV_LINKS, PAGE_LINKS } from "../../services/contentService";
 import "./Navbar.css";
 
 export default function Navbar() {
-  const scrolled   = useScrolled(40);
+  const scrolled          = useScrolled(40);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { pathname } = useLocation();
+  const { pathname }      = useLocation();
 
-  // On any page other than home the navbar always shows the solid background
-  const isHome      = pathname === "/" || pathname === "";
-  const solidBg     = scrolled || !isHome;
+  const isHome  = pathname === "/" || pathname === "";
+  const solidBg = scrolled || !isHome;
+
+  const linkClass = `navbar__link ${solidBg ? "" : "navbar__link--light"}`.trim();
 
   return (
     <nav className={`navbar ${solidBg ? "navbar--scrolled" : ""}`}>
       <div className="container navbar__inner">
+
+        {/* Logo */}
         <Link to="/" className="navbar__logo">
           <span className="navbar__logo-mark">◈</span>
           <span className={`navbar__logo-text ${solidBg ? "" : "navbar__logo-text--light"}`}>
@@ -23,19 +26,27 @@ export default function Navbar() {
           </span>
         </Link>
 
+        {/* Desktop nav links */}
         <ul className="navbar__links">
+          {/* Anchor links — same page scroll */}
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
-              <a
-                href={link.href}
-                className={`navbar__link ${solidBg ? "" : "navbar__link--light"}`}
-              >
+              <a href={link.href} className={linkClass}>
                 {link.label}
               </a>
             </li>
           ))}
+          {/* Route links — client-side navigation */}
+          {PAGE_LINKS.map((link) => (
+            <li key={link.to}>
+              <Link to={link.to} className={linkClass}>
+                {link.label}
+              </Link>
+            </li>
+          ))}
         </ul>
 
+        {/* CTA */}
         <Link
           to="/appointment"
           className={`navbar__cta ${solidBg ? "navbar__cta--dark" : "navbar__cta--light"}`}
@@ -43,6 +54,7 @@ export default function Navbar() {
           Set an Appointment
         </Link>
 
+        {/* Burger */}
         <button
           className={`navbar__burger ${menuOpen ? "open" : ""} ${solidBg ? "" : "navbar__burger--light"}`}
           onClick={() => setMenuOpen(!menuOpen)}
@@ -52,6 +64,7 @@ export default function Navbar() {
         </button>
       </div>
 
+      {/* Mobile menu */}
       <div className={`navbar__mobile ${menuOpen ? "navbar__mobile--open" : ""}`}>
         {NAV_LINKS.map((link) => (
           <a
@@ -62,6 +75,16 @@ export default function Navbar() {
           >
             {link.label}
           </a>
+        ))}
+        {PAGE_LINKS.map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className="navbar__mobile-link"
+            onClick={() => setMenuOpen(false)}
+          >
+            {link.label}
+          </Link>
         ))}
         <Link
           to="/appointment"

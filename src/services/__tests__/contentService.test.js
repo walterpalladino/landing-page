@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
-  NAV_LINKS, SERVICES, CLIENTS, SOCIAL_LINKS, STATS, getServiceBySlug,
+  NAV_LINKS, PAGE_LINKS, SERVICES, CLIENTS, SOCIAL_LINKS, STATS,
+  ABOUT, getServiceBySlug,
 } from "../contentService";
 
 describe("NAV_LINKS", () => {
@@ -9,6 +10,52 @@ describe("NAV_LINKS", () => {
     NAV_LINKS.forEach((l) => {
       expect(l.label).toBeTruthy();
       expect(l.href).toMatch(/^#/);
+    });
+  });
+});
+
+describe("PAGE_LINKS", () => {
+  it("is a non-empty array", () => expect(PAGE_LINKS.length).toBeGreaterThan(0));
+  it("every entry has label and to starting with /", () => {
+    PAGE_LINKS.forEach((l) => {
+      expect(l.label).toBeTruthy();
+      expect(l.to).toMatch(/^\//);
+    });
+  });
+  it("includes an About Us entry pointing to /about", () => {
+    expect(PAGE_LINKS.some((l) => l.to === "/about")).toBe(true);
+  });
+});
+
+describe("ABOUT", () => {
+  it("has headline, subheadline, image, and imageSplit", () => {
+    expect(ABOUT.headline).toBeTruthy();
+    expect(ABOUT.subheadline).toBeTruthy();
+    expect(ABOUT.image).toContain("picsum.photos");
+    expect(ABOUT.imageSplit).toContain("picsum.photos");
+  });
+
+  it("has at least one story paragraph", () => {
+    expect(Array.isArray(ABOUT.story)).toBe(true);
+    expect(ABOUT.story.length).toBeGreaterThan(0);
+    ABOUT.story.forEach((p) => expect(typeof p).toBe("string"));
+  });
+
+  it("has at least 2 values, each with title and desc", () => {
+    expect(ABOUT.values.length).toBeGreaterThanOrEqual(2);
+    ABOUT.values.forEach((v) => {
+      expect(v.title).toBeTruthy();
+      expect(v.desc).toBeTruthy();
+    });
+  });
+
+  it("has at least 1 team member with name, role, bio, and image", () => {
+    expect(ABOUT.team.length).toBeGreaterThan(0);
+    ABOUT.team.forEach((m) => {
+      expect(m.name).toBeTruthy();
+      expect(m.role).toBeTruthy();
+      expect(m.bio).toBeTruthy();
+      expect(m.image).toContain("picsum.photos");
     });
   });
 });

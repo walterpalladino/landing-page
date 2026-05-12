@@ -9,6 +9,69 @@ export const NAV_LINKS = [
   { label: "Contact",  href: "#contact"  },
 ];
 
+/**
+ * Route-based navigation links (use <Link to={...}> not <a href={...}>).
+ */
+export const PAGE_LINKS = [
+  { label: "About Us", to: "/about" },
+];
+
+export const ABOUT = {
+  headline:    "We are Meridian.",
+  subheadline: "A creative studio built on craft, curiosity, and conviction.",
+  image:       "https://picsum.photos/seed/aboutteam/1200/800",
+  imageSplit:  "https://picsum.photos/seed/aboutoffice/800/600",
+  story: [
+    "Meridian was founded in 2018 by a small team of designers, engineers, and strategists who believed that great work comes from genuine collaboration — not siloed departments handing work over a fence.",
+    "We started as a two-person brand consultancy in a shared Manhattan workspace. Today we're a studio of twenty-plus across New York and remote, working with clients from early-stage startups to established global brands.",
+    "What hasn't changed is the way we work: closely, honestly, and with a healthy obsession over the details that most agencies rush past.",
+  ],
+  values: [
+    {
+      title: "Craft first",
+      desc:  "Every pixel, word, and line of code is considered. We don't ship work we're not proud of.",
+    },
+    {
+      title: "Honest partnership",
+      desc:  "We tell clients what they need to hear, not what they want to hear. Long relationships are built on trust.",
+    },
+    {
+      title: "Curiosity over comfort",
+      desc:  "We ask why before we answer how. Assumptions are the enemy of good design.",
+    },
+    {
+      title: "Outcomes over output",
+      desc:  "Deliverables are a means, not an end. We measure success by what changes for our clients.",
+    },
+  ],
+  team: [
+    {
+      name:  "Adriana Voss",
+      role:  "Founder & Creative Director",
+      bio:   "Former creative lead at Wolff Olins. Obsessed with typography, systems thinking, and excellent coffee.",
+      image: "https://picsum.photos/seed/team-av/400/500",
+    },
+    {
+      name:  "Marcus Tanaka",
+      role:  "Head of Technology",
+      bio:   "Ex-Stripe engineer. Believes the best code is the code nobody notices.",
+      image: "https://picsum.photos/seed/team-mt/400/500",
+    },
+    {
+      name:  "Priya Nair",
+      role:  "Strategy Director",
+      bio:   "MBA from INSEAD, ten years in brand consulting. Translates business problems into creative briefs.",
+      image: "https://picsum.photos/seed/team-pn/400/500",
+    },
+    {
+      name:  "Leo Ferreira",
+      role:  "Head of Motion & Film",
+      bio:   "Award-winning director. Has shot in 22 countries and counting.",
+      image: "https://picsum.photos/seed/team-lf/400/500",
+    },
+  ],
+};
+
 export const SERVICES = [
   {
     id: 1,
