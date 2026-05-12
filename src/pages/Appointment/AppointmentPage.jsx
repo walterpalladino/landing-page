@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm }           from "../../hooks/useForm";
 import { useAvailableDates } from "../../hooks/useAvailableDates";
@@ -18,6 +19,12 @@ export default function AppointmentPage() {
   const navigate = useNavigate();
   const { values, submitted, handleChange, handleSubmit, reset } = useForm(INITIAL);
   const { dates, loading, error, refresh } = useAvailableDates();
+
+  // Scroll to the top of the page whenever the submitted state changes —
+  // both when the form is submitted (show success) and when reset (show form again).
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [submitted]);
 
   const handleSlotSelect = (selection) =>
     handleChange({ target: { name: "slot", value: selection } });

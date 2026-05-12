@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import AppointmentPage from "../AppointmentPage";
@@ -207,6 +206,65 @@ describe("AppointmentPage — submission", () => {
     await user.click(screen.getByRole("button", { name: /book another/i }));
     await waitFor(() =>
       expect(screen.getByLabelText("First Name")).toHaveValue("")
+    );
+  });
+});
+
+// ── Scroll behaviour ────────────────────────────────────
+
+describe("AppointmentPage — scroll to top", () => {
+  beforeEach(() => {
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  });
+
+  it("scrolls to top when form is submitted", async () => {
+    const user = userEvent.setup();
+    const { container } = setup();
+
+    await waitFor(() => screen.getByLabelText("First Name"));
+    await user.type(screen.getByLabelText("First Name"), "Jane");
+    await user.type(screen.getByLabelText("Last Name"), "Doe");
+    await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
+
+    await waitFor(() => container.querySelector(".tsp__cell--available"));
+    fireEvent.click(container.querySelector(".tsp__cell--available"));
+    fireEvent.click(screen.getByRole("button", { name: /confirm slot/i }));
+
+    fireEvent.submit(
+      screen.getByRole("button", { name: /send request/i }).closest("form")
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/Appointment request sent!/i)).toBeInTheDocument()
+    );
+
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+  });
+
+  it("scrolls to top when 'Book another' resets the form", async () => {
+    const user = userEvent.setup();
+    const { container } = setup();
+
+    await waitFor(() => screen.getByLabelText("First Name"));
+    await user.type(screen.getByLabelText("First Name"), "Jane");
+    await user.type(screen.getByLabelText("Last Name"), "Doe");
+    await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
+
+    await waitFor(() => container.querySelector(".tsp__cell--available"));
+    fireEvent.click(container.querySelector(".tsp__cell--available"));
+    fireEvent.click(screen.getByRole("button", { name: /confirm slot/i }));
+
+    fireEvent.submit(
+      screen.getByRole("button", { name: /send request/i }).closest("form")
+    );
+
+    await waitFor(() => screen.getByRole("button", { name: /book another/i }));
+    window.scrollTo.mockClear();
+
+    await user.click(screen.getByRole("button", { name: /book another/i }));
+
+    await waitFor(() =>
+      expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" })
     );
   });
 });
