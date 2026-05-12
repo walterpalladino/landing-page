@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { useForm } from "../../hooks/useForm";
+import { useForm }           from "../../hooks/useForm";
+import { useAvailableDates } from "../../hooks/useAvailableDates";
 import Input          from "../../components/ui/Input";
 import TimeSlotPicker from "../../components/ui/TimeSlotPicker";
 import Button         from "../../components/ui/Button";
@@ -10,53 +11,23 @@ const INITIAL = {
   lastName:  "",
   email:     "",
   phone:     "",
-  slot:      null,   // { date, slot }
+  slot:      null,
 };
-
-/**
- * Generates available dates starting from the next weekday,
- * so the page always shows realistic future availability.
- */
-function buildAvailableDates() {
-  const slots  = ["09:00", "09:30", "10:00", "10:30", "11:00",
-                   "14:00", "14:30", "15:00", "15:30", "16:00"];
-  const dates  = [];
-  let   cursor = new Date();
-  cursor.setDate(cursor.getDate() + 1);           // start tomorrow
-
-  while (dates.length < 5) {
-    const dow = cursor.getDay();
-    if (dow !== 0 && dow !== 6) {                 // skip weekends
-      const iso   = cursor.toISOString().split("T")[0];
-      const label = cursor.toLocaleDateString("en-US", {
-        weekday: "long", month: "long", day: "numeric",
-      });
-      // Each day has a random-ish subset of slots removed for realism
-      const available = slots.filter((_, i) => (i + cursor.getDate()) % 3 !== 0);
-      dates.push({ date: iso, label, slots: available });
-    }
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return dates;
-}
-
-const AVAILABLE_DATES = buildAvailableDates();
 
 export default function AppointmentPage() {
   const navigate = useNavigate();
   const { values, submitted, handleChange, handleSubmit, reset } = useForm(INITIAL);
+  const { dates, loading, error, refresh } = useAvailableDates();
 
-  const handleSlotSelect = (selection) => {
+  const handleSlotSelect = (selection) =>
     handleChange({ target: { name: "slot", value: selection } });
-  };
 
-  const handleSlotCancel = () => {
+  const handleSlotCancel = () =>
     handleChange({ target: { name: "slot", value: null } });
-  };
 
   const formatSlotLabel = (slot) => {
     if (!slot) return "";
-    const dateObj = AVAILABLE_DATES.find((d) => d.date === slot.date);
+    const dateObj = dates.find((d) => d.date === slot.date);
     return `${slot.slot} — ${dateObj?.label ?? slot.date}`;
   };
 
@@ -101,13 +72,14 @@ export default function AppointmentPage() {
         </header>
 
         {submitted ? (
+          /* ── Success ── */
           <div className="appt-page__success">
             <span className="appt-page__success-icon">◈</span>
             <h2 className="appt-page__success-title">Appointment request sent!</h2>
             <p className="appt-page__success-body">
-              Thank you, <strong>{values.firstName}</strong>. We&apos;ve received your
-              request for <strong>{formatSlotLabel(values.slot)}</strong>. You&apos;ll
-              receive full confirmation and instructions at{" "}
+              Thank you, <strong>{values.firstName}</strong>. We&apos;ve received
+              your request for <strong>{formatSlotLabel(values.slot)}</strong>.
+              You&apos;ll receive full confirmation and instructions at{" "}
               <strong>{values.email}</strong> within one business day.
             </p>
             <div className="appt-page__success-actions">
@@ -116,6 +88,7 @@ export default function AppointmentPage() {
             </div>
           </div>
         ) : (
+          /* ── Form ── */
           <form
             className="appt-page__form"
             onSubmit={handleSubmit(() => {})}
@@ -146,15 +119,38 @@ export default function AppointmentPage() {
               placeholder="+1 (555) 000-0000"
             />
 
-            <TimeSlotPicker
-              availableDates={AVAILABLE_DATES}
-              onSelect={handleSlotSelect}
-              onCancel={handleSlotCancel}
-            />
+            {/* ── Slot picker — loading / error / ready ── */}
+            {loading && (
+              <div className="appt-page__slots-loading" aria-busy="true">
+                <span className="appt-page__slots-loading-icon">◈</span>
+                <span>Loading available slots…</span>
+              </div>
+            )}
+
+            {error && !loading && (
+              <div className="appt-page__slots-error" role="alert">
+                <p>Could not load available slots. Please try again.</p>
+                <button
+                  type="button"
+                  className="appt-page__slots-retry"
+                  onClick={refresh}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {!loading && !error && (
+              <TimeSlotPicker
+                availableDates={dates}
+                onSelect={handleSlotSelect}
+                onCancel={handleSlotCancel}
+              />
+            )}
 
             {values.slot && (
               <p className="appt-page__slot-confirm">
-                ◈ &nbsp;Selected: <strong>{formatSlotLabel(values.slot)}</strong>
+                ◈&nbsp; Selected: <strong>{formatSlotLabel(values.slot)}</strong>
               </p>
             )}
 
@@ -165,8 +161,8 @@ export default function AppointmentPage() {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={!values.slot}
-                aria-disabled={!values.slot}
+                disabled={!values.slot || loading}
+                aria-disabled={!values.slot || loading}
               >
                 Send Request →
               </Button>
