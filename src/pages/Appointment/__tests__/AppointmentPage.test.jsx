@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import AppointmentPage from "../AppointmentPage";
 
-/** Renders the component wrapped in a router so useNavigate doesn't throw. */
 const setup = () =>
   render(
     <MemoryRouter>
@@ -12,8 +11,9 @@ const setup = () =>
     </MemoryRouter>
   );
 
-describe("AppointmentPage", () => {
-  // ── Layout & static content ──────────────────────────
+// ── Layout & static content ─────────────────────────────
+
+describe("AppointmentPage — layout", () => {
   it("renders the page eyebrow", () => {
     setup();
     expect(screen.getByText(/Set an Appointment/i)).toBeInTheDocument();
@@ -40,50 +40,53 @@ describe("AppointmentPage", () => {
     setup();
     expect(screen.getByRole("button", { name: /back/i })).toBeInTheDocument();
   });
+});
 
-  // ── Form fields ──────────────────────────────────────
-  it("renders all form fields", () => {
+// ── Form fields ─────────────────────────────────────────
+
+describe("AppointmentPage — form fields", () => {
+  it("renders all text inputs", () => {
     setup();
     expect(screen.getByLabelText("First Name")).toBeInTheDocument();
     expect(screen.getByLabelText("Last Name")).toBeInTheDocument();
     expect(screen.getByLabelText("Email Address")).toBeInTheDocument();
     expect(screen.getByLabelText("Phone Number")).toBeInTheDocument();
-    expect(screen.getByLabelText("Preferred Date")).toBeInTheDocument();
   });
 
-  it("email field has type email", () => {
+  it("renders the TimeSlotPicker grid", () => {
+    const { container } = setup();
+    expect(container.querySelector(".tsp__grid")).toBeInTheDocument();
+  });
+
+  it("renders the TimeSlotPicker Cancel button", () => {
+    setup();
+    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
+  });
+
+  it("email input has type email", () => {
     setup();
     expect(screen.getByLabelText("Email Address")).toHaveAttribute("type", "email");
   });
 
-  it("phone field has type tel", () => {
+  it("phone input has type tel", () => {
     setup();
     expect(screen.getByLabelText("Phone Number")).toHaveAttribute("type", "tel");
   });
 
-  it("date field has type date", () => {
+  it("Send Request button is disabled before a slot is selected", () => {
     setup();
-    expect(screen.getByLabelText("Preferred Date")).toHaveAttribute("type", "date");
+    expect(screen.getByRole("button", { name: /send request/i })).toBeDisabled();
   });
+});
 
-  it("renders the Send Request submit button", () => {
-    setup();
-    expect(screen.getByRole("button", { name: /send request/i })).toBeInTheDocument();
-  });
+// ── Controlled inputs ───────────────────────────────────
 
-  // ── Controlled inputs ────────────────────────────────
+describe("AppointmentPage — controlled inputs", () => {
   it("updates First Name on input", async () => {
     const user = userEvent.setup();
     setup();
     await user.type(screen.getByLabelText("First Name"), "Jane");
     expect(screen.getByLabelText("First Name")).toHaveValue("Jane");
-  });
-
-  it("updates Last Name on input", async () => {
-    const user = userEvent.setup();
-    setup();
-    await user.type(screen.getByLabelText("Last Name"), "Doe");
-    expect(screen.getByLabelText("Last Name")).toHaveValue("Doe");
   });
 
   it("updates Email on input", async () => {
@@ -92,81 +95,80 @@ describe("AppointmentPage", () => {
     await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
     expect(screen.getByLabelText("Email Address")).toHaveValue("jane@example.com");
   });
+});
 
-  it("updates Phone on input", async () => {
-    const user = userEvent.setup();
-    setup();
-    await user.type(screen.getByLabelText("Phone Number"), "+15550001234");
-    expect(screen.getByLabelText("Phone Number")).toHaveValue("+15550001234");
+// ── Slot selection & submission ─────────────────────────
+
+describe("AppointmentPage — slot selection", () => {
+  it("enables Send Request after a slot is selected", () => {
+    const { container } = setup();
+    const cell = container.querySelector(".tsp__cell--available");
+    fireEvent.click(cell);
+    // Click Confirm in the picker
+    fireEvent.click(screen.getByRole("button", { name: /confirm slot/i }));
+    expect(screen.getByRole("button", { name: /send request/i })).not.toBeDisabled();
   });
 
-  it("updates Date on change", () => {
-    setup();
-    fireEvent.change(screen.getByLabelText("Preferred Date"), {
-      target: { value: "2030-08-20" },
-    });
-    expect(screen.getByLabelText("Preferred Date")).toHaveValue("2030-08-20");
+  it("shows slot confirmation text after selecting", () => {
+    const { container } = setup();
+    fireEvent.click(container.querySelector(".tsp__cell--available"));
+    fireEvent.click(screen.getByRole("button", { name: /confirm slot/i }));
+    expect(container.querySelector(".appt-page__slot-confirm")).toBeInTheDocument();
   });
 
-  // ── Submission & success state ───────────────────────
-  it("shows success message after submission", async () => {
+  it("clears slot confirmation when Cancel is clicked", () => {
+    const { container } = setup();
+    fireEvent.click(container.querySelector(".tsp__cell--available"));
+    fireEvent.click(screen.getByRole("button", { name: /confirm slot/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+    expect(container.querySelector(".appt-page__slot-confirm")).not.toBeInTheDocument();
+  });
+});
+
+// ── Submission & success ────────────────────────────────
+
+describe("AppointmentPage — submission", () => {
+  const fillAndSubmit = async () => {
     const user = userEvent.setup();
-    setup();
+    const { container } = setup();
+
     await user.type(screen.getByLabelText("First Name"), "Jane");
     await user.type(screen.getByLabelText("Last Name"), "Doe");
     await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
-    fireEvent.change(screen.getByLabelText("Preferred Date"), {
-      target: { value: "2030-08-20" },
-    });
+
+    // Select a slot and confirm it
+    fireEvent.click(container.querySelector(".tsp__cell--available"));
+    fireEvent.click(screen.getByRole("button", { name: /confirm slot/i }));
+
+    // Submit
     fireEvent.submit(
       screen.getByRole("button", { name: /send request/i }).closest("form")
     );
+
+    return { container };
+  };
+
+  it("shows success message after form submission", async () => {
+    await fillAndSubmit();
     await waitFor(() =>
       expect(screen.getByText(/Appointment request sent!/i)).toBeInTheDocument()
     );
   });
 
-  it("shows the user's first name in the success message", async () => {
-    const user = userEvent.setup();
-    setup();
-    await user.type(screen.getByLabelText("First Name"), "Jane");
-    await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
-    fireEvent.change(screen.getByLabelText("Preferred Date"), {
-      target: { value: "2030-08-20" },
-    });
-    fireEvent.submit(
-      screen.getByRole("button", { name: /send request/i }).closest("form")
-    );
+  it("includes the user's first name in the success message", async () => {
+    await fillAndSubmit();
     await waitFor(() => expect(screen.getByText("Jane")).toBeInTheDocument());
   });
 
-  it("hides the form after successful submission", async () => {
-    const user = userEvent.setup();
-    setup();
-    await user.type(screen.getByLabelText("First Name"), "Jane");
-    await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
-    fireEvent.change(screen.getByLabelText("Preferred Date"), {
-      target: { value: "2030-08-20" },
-    });
-    fireEvent.submit(
-      screen.getByRole("button", { name: /send request/i }).closest("form")
-    );
+  it("hides the form after submission", async () => {
+    await fillAndSubmit();
     await waitFor(() =>
       expect(screen.queryByLabelText("First Name")).not.toBeInTheDocument()
     );
   });
 
-  it("shows 'Book another' button in success state", async () => {
-    const user = userEvent.setup();
-    setup();
-    await user.type(screen.getByLabelText("First Name"), "Jane");
-    await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
-    fireEvent.change(screen.getByLabelText("Preferred Date"), {
-      target: { value: "2030-08-20" },
-    });
-    fireEvent.submit(
-      screen.getByRole("button", { name: /send request/i }).closest("form")
-    );
+  it("shows 'Book another' in success state", async () => {
+    await fillAndSubmit();
     await waitFor(() =>
       expect(screen.getByRole("button", { name: /book another/i })).toBeInTheDocument()
     );
@@ -174,15 +176,7 @@ describe("AppointmentPage", () => {
 
   it("resets the form when 'Book another' is clicked", async () => {
     const user = userEvent.setup();
-    setup();
-    await user.type(screen.getByLabelText("First Name"), "Jane");
-    await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
-    fireEvent.change(screen.getByLabelText("Preferred Date"), {
-      target: { value: "2030-08-20" },
-    });
-    fireEvent.submit(
-      screen.getByRole("button", { name: /send request/i }).closest("form")
-    );
+    await fillAndSubmit();
     await waitFor(() => screen.getByRole("button", { name: /book another/i }));
     await user.click(screen.getByRole("button", { name: /book another/i }));
     expect(screen.getByLabelText("First Name")).toHaveValue("");

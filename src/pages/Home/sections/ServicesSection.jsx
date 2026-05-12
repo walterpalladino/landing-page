@@ -17,10 +17,12 @@ export default function ServicesSection() {
 
         <div className="services__grid">
           {SERVICES.map((service, i) => (
-            <article
+            <Link
               key={service.id}
+              to={`/services/${service.slug}`}
               className="service-card"
               style={{ animationDelay: `${i * 0.08}s` }}
+              aria-label={`Learn more about ${service.title}`}
             >
               <div className="service-card__img-wrap">
                 <img
@@ -34,15 +36,9 @@ export default function ServicesSection() {
               <div className="service-card__body">
                 <h3 className="service-card__title">{service.title}</h3>
                 <p className="service-card__desc">{service.description}</p>
-                <Link
-                  to={`/services/${service.slug}`}
-                  className="service-card__link"
-                  aria-label={`Learn more about ${service.title}`}
-                >
-                  Learn more →
-                </Link>
+                <span className="service-card__link">Learn more →</span>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       </div>

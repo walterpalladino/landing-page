@@ -41,15 +41,24 @@
 }
 
 .service-card {
+  display: block;           /* <Link> is an <a>; needs block to fill the grid cell */
+  text-decoration: none;
   background: var(--cream);
   overflow: hidden;
   cursor: pointer;
   transition: background 0.3s;
 }
-.service-card:hover                    { background: var(--ink); }
+.service-card:hover                     { background: var(--ink); }
 .service-card:hover .service-card__title,
-.service-card:hover .service-card__desc { color: var(--paper); }
-.service-card:hover .service-card__link { color: var(--accent-light); }
+.service-card:hover .service-card__desc  { color: var(--paper); }
+.service-card:hover .service-card__link  {
+  color: var(--accent-light);
+  letter-spacing: 0.22em;   /* subtle expansion on hover */
+}
+.service-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
 
 .service-card__img-wrap {
   position: relative;
@@ -100,7 +109,7 @@
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--accent);
-  transition: color 0.3s;
+  transition: color 0.3s, letter-spacing 0.3s;
 }
 
 @media (max-width: 900px) { .services__grid { grid-template-columns: repeat(2, 1fr); } }
