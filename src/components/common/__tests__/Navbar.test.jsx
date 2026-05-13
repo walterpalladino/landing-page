@@ -92,6 +92,22 @@ describe("Navbar", () => {
     expect(mobile).not.toHaveClass("navbar__mobile--open");
   });
 
+  it("scrolls to top when logo is clicked on the home page", () => {
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    setup("/");
+    fireEvent.click(screen.getByText("MERIDIAN").closest("a"));
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+    vi.restoreAllMocks();
+  });
+
+  it("does not call scrollTo when logo is clicked on a non-home page", () => {
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    setup("/about");
+    fireEvent.click(screen.getByText("MERIDIAN").closest("a"));
+    expect(window.scrollTo).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
   it("'About Us' appears in the mobile menu", () => {
     const { container } = setup();
     fireEvent.click(screen.getByLabelText("Toggle menu"));

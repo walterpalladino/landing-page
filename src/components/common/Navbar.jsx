@@ -20,7 +20,14 @@ export default function Navbar() {
       <div className="container navbar__inner">
 
         {/* Logo */}
-        <Link to="/" className="navbar__logo">
+        {/* Logo — scrolls to top when already on home, navigates otherwise */}
+        <Link
+          to="/"
+          className="navbar__logo"
+          onClick={() => {
+            if (isHome) window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
           <span className="navbar__logo-mark">◈</span>
           <span className={`navbar__logo-text ${solidBg ? "" : "navbar__logo-text--light"}`}>
             MERIDIAN
