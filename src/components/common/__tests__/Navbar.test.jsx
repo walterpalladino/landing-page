@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Navbar from "../Navbar";
@@ -97,5 +97,51 @@ describe("Navbar", () => {
     fireEvent.click(screen.getByLabelText("Toggle menu"));
     const mobile = container.querySelector(".navbar__mobile");
     expect(mobile.textContent).toContain("About Us");
+  });
+});
+
+// ── Section-driven link visibility ──────────────────────
+
+describe("Navbar — nav links respect HOME_SECTIONS", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("hides Clients link when HOME_SECTIONS.clients is false", async () => {
+    const contentService = await import("../../../services/contentService");
+    vi.spyOn(contentService, "getActiveNavLinks").mockReturnValue(
+      contentService.NAV_LINKS.filter((l) => l.section !== "clients")
+    );
+    render(<MemoryRouter><Navbar /></MemoryRouter>);
+    expect(screen.queryAllByRole("link", { name: /^Clients$/i })).toHaveLength(0);
+  });
+
+  it("hides Services link when HOME_SECTIONS.services is false", async () => {
+    const contentService = await import("../../../services/contentService");
+    vi.spyOn(contentService, "getActiveNavLinks").mockReturnValue(
+      contentService.NAV_LINKS.filter((l) => l.section !== "services")
+    );
+    render(<MemoryRouter><Navbar /></MemoryRouter>);
+    expect(screen.queryAllByRole("link", { name: /^Services$/i })).toHaveLength(0);
+  });
+
+  it("hides Contact link when HOME_SECTIONS.contact is false", async () => {
+    const contentService = await import("../../../services/contentService");
+    vi.spyOn(contentService, "getActiveNavLinks").mockReturnValue(
+      contentService.NAV_LINKS.filter((l) => l.section !== "contact")
+    );
+    render(<MemoryRouter><Navbar /></MemoryRouter>);
+    expect(screen.queryAllByRole("link", { name: /^Contact$/i })).toHaveLength(0);
+  });
+
+  it("shows all links when all HOME_SECTIONS flags are true", async () => {
+    const contentService = await import("../../../services/contentService");
+    vi.spyOn(contentService, "getActiveNavLinks").mockReturnValue(
+      contentService.NAV_LINKS
+    );
+    render(<MemoryRouter><Navbar /></MemoryRouter>);
+    contentService.NAV_LINKS.forEach(({ label }) => {
+      expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+    });
   });
 });

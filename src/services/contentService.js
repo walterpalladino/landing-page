@@ -3,11 +3,32 @@
  * Central source of truth for all static landing-page content.
  */
 
+/**
+ * HOME_SECTIONS
+ * Controls which sections are rendered on the home page.
+ * Set any entry to `false` to hide that section without touching component code.
+ */
+export const HOME_SECTIONS = {
+  hero:     true,
+  services: true,
+  clients:  true,
+  contact:  true,
+};
+
 export const NAV_LINKS = [
-  { label: "Services", href: "#services" },
-  { label: "Clients",  href: "#clients"  },
-  { label: "Contact",  href: "#contact"  },
+  { label: "Services", href: "#services", section: "services" },
+  { label: "Clients",  href: "#clients",  section: "clients"  },
+  { label: "Contact",  href: "#contact",  section: "contact"  },
 ];
+
+/**
+ * Returns only the NAV_LINKS whose corresponding HOME_SECTIONS entry is enabled.
+ * Links without a `section` key are always included.
+ */
+export const getActiveNavLinks = () =>
+  NAV_LINKS.filter((link) =>
+    link.section === undefined || HOME_SECTIONS[link.section] !== false
+  );
 
 /**
  * Route-based navigation links (use <Link to={...}> not <a href={...}>).

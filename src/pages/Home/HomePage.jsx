@@ -1,3 +1,4 @@
+import { HOME_SECTIONS } from "../../services/contentService";
 import {
   HeroSection,
   ServicesSection,
@@ -8,10 +9,10 @@ import {
 export default function HomePage() {
   return (
     <main>
-      <HeroSection />
-      <ServicesSection />
-      <ClientsSection />
-      <ContactSection />
+      {HOME_SECTIONS.hero     && <HeroSection />}
+      {HOME_SECTIONS.services && <ServicesSection />}
+      {HOME_SECTIONS.clients  && <ClientsSection />}
+      {HOME_SECTIONS.contact  && <ContactSection />}
     </main>
   );
 }

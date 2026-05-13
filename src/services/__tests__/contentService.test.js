@@ -1,16 +1,100 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
+  HOME_SECTIONS,
   NAV_LINKS, PAGE_LINKS, SERVICES, CLIENTS, SOCIAL_LINKS, STATS,
-  ABOUT, getServiceBySlug,
+  ABOUT, getServiceBySlug, getActiveNavLinks,
 } from "../contentService";
+
+describe("HOME_SECTIONS", () => {
+  it("exports HOME_SECTIONS as an object", () => {
+    expect(typeof HOME_SECTIONS).toBe("object");
+    expect(HOME_SECTIONS).not.toBeNull();
+  });
+
+  it("has entries for all four home sections", () => {
+    expect(HOME_SECTIONS).toHaveProperty("hero");
+    expect(HOME_SECTIONS).toHaveProperty("services");
+    expect(HOME_SECTIONS).toHaveProperty("clients");
+    expect(HOME_SECTIONS).toHaveProperty("contact");
+  });
+
+  it("every value is a boolean", () => {
+    Object.values(HOME_SECTIONS).forEach((v) =>
+      expect(typeof v).toBe("boolean")
+    );
+  });
+
+  it("all sections are enabled by default", () => {
+    Object.values(HOME_SECTIONS).forEach((v) => expect(v).toBe(true));
+  });
+});
 
 describe("NAV_LINKS", () => {
   it("is a non-empty array", () => expect(NAV_LINKS.length).toBeGreaterThan(0));
-  it("every entry has label and href starting with #", () => {
+  it("every entry has label, href (starting with #), and a section key", () => {
     NAV_LINKS.forEach((l) => {
       expect(l.label).toBeTruthy();
       expect(l.href).toMatch(/^#/);
+      expect(l.section).toBeTruthy();
     });
+  });
+  it("each section key matches a HOME_SECTIONS key", () => {
+    NAV_LINKS.forEach((l) => {
+      expect(HOME_SECTIONS).toHaveProperty(l.section);
+    });
+  });
+});
+
+describe("getActiveNavLinks", () => {
+  it("returns all links when every HOME_SECTIONS entry is true", () => {
+    // All flags are true by default
+    expect(getActiveNavLinks()).toHaveLength(NAV_LINKS.length);
+  });
+
+  it("excludes the Clients link when HOME_SECTIONS.clients is false", () => {
+    HOME_SECTIONS.clients = false;
+    const active = getActiveNavLinks();
+    expect(active.some((l) => l.section === "clients")).toBe(false);
+    HOME_SECTIONS.clients = true; // restore
+  });
+
+  it("excludes the Services link when HOME_SECTIONS.services is false", () => {
+    HOME_SECTIONS.services = false;
+    const active = getActiveNavLinks();
+    expect(active.some((l) => l.section === "services")).toBe(false);
+    HOME_SECTIONS.services = true;
+  });
+
+  it("excludes the Contact link when HOME_SECTIONS.contact is false", () => {
+    HOME_SECTIONS.contact = false;
+    const active = getActiveNavLinks();
+    expect(active.some((l) => l.section === "contact")).toBe(false);
+    HOME_SECTIONS.contact = true;
+  });
+
+  it("returns an empty array when all section flags are false", () => {
+    HOME_SECTIONS.services = false;
+    HOME_SECTIONS.clients  = false;
+    HOME_SECTIONS.contact  = false;
+    expect(getActiveNavLinks()).toHaveLength(0);
+    HOME_SECTIONS.services = true;
+    HOME_SECTIONS.clients  = true;
+    HOME_SECTIONS.contact  = true;
+  });
+
+  it("always includes links that have no section key", () => {
+    // Add a section-less link temporarily
+    const extra = { label: "Blog", href: "#blog" };
+    NAV_LINKS.push(extra);
+    HOME_SECTIONS.services = false;
+    HOME_SECTIONS.clients  = false;
+    HOME_SECTIONS.contact  = false;
+    const active = getActiveNavLinks();
+    expect(active.some((l) => l.label === "Blog")).toBe(true);
+    NAV_LINKS.pop();
+    HOME_SECTIONS.services = true;
+    HOME_SECTIONS.clients  = true;
+    HOME_SECTIONS.contact  = true;
   });
 });
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useScrolled } from "../../hooks/useScrolled";
-import { NAV_LINKS, PAGE_LINKS } from "../../services/contentService";
+import { NAV_LINKS, PAGE_LINKS, getActiveNavLinks } from "../../services/contentService";
 import "./Navbar.css";
 
 export default function Navbar() {
@@ -9,8 +9,9 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname }      = useLocation();
 
-  const isHome  = pathname === "/" || pathname === "";
-  const solidBg = scrolled || !isHome;
+  const isHome     = pathname === "/" || pathname === "";
+  const solidBg    = scrolled || !isHome;
+  const activeLinks = getActiveNavLinks();
 
   const linkClass = `navbar__link ${solidBg ? "" : "navbar__link--light"}`.trim();
 
@@ -29,7 +30,7 @@ export default function Navbar() {
         {/* Desktop nav links */}
         <ul className="navbar__links">
           {/* Anchor links — same page scroll */}
-          {NAV_LINKS.map((link) => (
+          {activeLinks.map((link) => (
             <li key={link.href}>
               <a href={link.href} className={linkClass}>
                 {link.label}
@@ -66,7 +67,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       <div className={`navbar__mobile ${menuOpen ? "navbar__mobile--open" : ""}`}>
-        {NAV_LINKS.map((link) => (
+        {activeLinks.map((link) => (
           <a
             key={link.href}
             href={link.href}
