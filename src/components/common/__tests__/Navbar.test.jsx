@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Navbar from "../Navbar";
-import { NAV_LINKS, PAGE_LINKS } from "../../../services/contentService";
+import { NAV_LINKS, PAGE_LINKS, getActiveNavLinks } from "../../../services/contentService";
 
 const setup = (path = "/") =>
   render(<MemoryRouter initialEntries={[path]}><Navbar /></MemoryRouter>);
@@ -20,9 +20,25 @@ describe("Navbar", () => {
 
   it("renders all anchor nav links", () => {
     setup();
-    NAV_LINKS.forEach(({ label }) =>
+    getActiveNavLinks().forEach(({ label }) =>
       expect(screen.getAllByText(label).length).toBeGreaterThan(0)
     );
+  });
+
+  it("section links use plain #anchor href when on the home page", () => {
+    setup("/");
+    getActiveNavLinks().forEach(({ href, label }) => {
+      const link = screen.getAllByRole("link", { name: label })[0];
+      expect(link).toHaveAttribute("href", href); // e.g. "#services"
+    });
+  });
+
+  it("section links use /#anchor href when on a non-home page", () => {
+    setup("/services/brand-strategy");
+    getActiveNavLinks().forEach(({ href, label }) => {
+      const link = screen.getAllByRole("link", { name: label })[0];
+      expect(link).toHaveAttribute("href", `/${href}`); // e.g. "/#services"
+    });
   });
 
   it("renders all route-based page links", () => {

@@ -1,25 +1,31 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useScrolled } from "../../hooks/useScrolled";
-import { NAV_LINKS, PAGE_LINKS, getActiveNavLinks } from "../../services/contentService";
+import { PAGE_LINKS, getActiveNavLinks } from "../../services/contentService";
 import "./Navbar.css";
 
 export default function Navbar() {
-  const scrolled          = useScrolled(40);
+  const scrolled             = useScrolled(40);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { pathname }      = useLocation();
+  const { pathname }         = useLocation();
 
-  const isHome     = pathname === "/" || pathname === "";
-  const solidBg    = scrolled || !isHome;
+  const isHome      = pathname === "/" || pathname === "";
+  const solidBg     = scrolled || !isHome;
   const activeLinks = getActiveNavLinks();
 
   const linkClass = `navbar__link ${solidBg ? "" : "navbar__link--light"}`.trim();
+
+  /**
+   * Builds the correct href for a section anchor link.
+   * - On home:     "#services"           → native browser scroll
+   * - Elsewhere:   "/#services"          → navigate to home then scroll
+   */
+  const sectionHref = (anchor) => (isHome ? anchor : `/${anchor}`);
 
   return (
     <nav className={`navbar ${solidBg ? "navbar--scrolled" : ""}`}>
       <div className="container navbar__inner">
 
-        {/* Logo */}
         {/* Logo — scrolls to top when already on home, navigates otherwise */}
         <Link
           to="/"
@@ -36,15 +42,15 @@ export default function Navbar() {
 
         {/* Desktop nav links */}
         <ul className="navbar__links">
-          {/* Anchor links — same page scroll */}
+          {/* Section anchor links */}
           {activeLinks.map((link) => (
             <li key={link.href}>
-              <a href={link.href} className={linkClass}>
+              <a href={sectionHref(link.href)} className={linkClass}>
                 {link.label}
               </a>
             </li>
           ))}
-          {/* Route links — client-side navigation */}
+          {/* Route links */}
           {PAGE_LINKS.map((link) => (
             <li key={link.to}>
               <Link to={link.to} className={linkClass}>
@@ -77,7 +83,7 @@ export default function Navbar() {
         {activeLinks.map((link) => (
           <a
             key={link.href}
-            href={link.href}
+            href={sectionHref(link.href)}
             className="navbar__mobile-link"
             onClick={() => setMenuOpen(false)}
           >
