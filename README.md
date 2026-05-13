@@ -398,3 +398,13 @@ https://<your-username>.github.io/landing-page
 | Number of days shown in picker | `DAYS_AHEAD` constant in `appointmentService.js` |
 | Connect a real appointments API | Replace `getAvailableDates` and `submitAppointment` in `appointmentService.js` |
 | Global colours & fonts | CSS custom properties in `src/index.css` |
+
+---
+
+## Live Demo
+
+A deployed version of this project is available at:
+
+**[https://walterpalladino.github.io/landing-page/](https://walterpalladino.github.io/landing-page/)**
+
+This is a live test environment running the latest published build. Use it to explore the pages, navigation, service details, appointment booking flow, and responsive layout before setting up a local environment.
