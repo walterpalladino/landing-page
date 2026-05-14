@@ -12,18 +12,25 @@
   margin-bottom: 2px;
 }
 
+/* Card is now a <Link> (<a> element) */
 .client-card {
-  background: var(--paper);
-  padding: 32px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  background: var(--paper);
+  padding: 32px 20px 28px;
+  text-decoration: none;
   transition: background 0.25s;
   cursor: pointer;
 }
-.client-card:hover { background: var(--ink); }
-.client-card:hover .client-card__name { color: var(--paper); }
+.client-card:hover                   { background: var(--ink); }
+.client-card:hover .client-card__name,
+.client-card:hover .client-card__industry { color: var(--paper); }
+.client-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
 
 .client-card__logo {
   width: 100%;
@@ -49,6 +56,16 @@
   text-align: center;
   transition: color 0.25s;
 }
+
+.client-card__industry {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--border);
+  text-align: center;
+  transition: color 0.25s;
+}
+.client-card:hover .client-card__industry { color: var(--muted); }
 
 .clients__stat-row {
   display: grid;

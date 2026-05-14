@@ -53,12 +53,10 @@ describe("computeAvailableSlots", () => {
     result.forEach((s) => expect(ALL_TIME_SLOTS).toContain(s));
   });
 
-  it("returns different subsets for different dates (simulates real availability)", () => {
+  it("returns different subsets for different dates", () => {
     const a = computeAvailableSlots("2030-06-09", ALL_TIME_SLOTS);
     const b = computeAvailableSlots("2030-06-10", ALL_TIME_SLOTS);
-    // At least one must differ (their day-of-month differs by 1)
-    const same = JSON.stringify(a) === JSON.stringify(b);
-    expect(same).toBe(false);
+    expect(JSON.stringify(a)).not.toBe(JSON.stringify(b));
   });
 
   it("returns an empty array when no candidate slots provided", () => {
@@ -68,17 +66,20 @@ describe("computeAvailableSlots", () => {
 
 // ── buildAvailableDates ─────────────────────────────────
 
+// 2030-01-07 is a Monday — fixed anchor so tests never depend on today's date.
+const FIXED_FROM = new Date("2030-01-07T12:00:00");
+
 describe("buildAvailableDates", () => {
-  it("returns the requested number of dates (default 5)", () => {
-    expect(buildAvailableDates()).toHaveLength(5);
+  it("returns the default count of 5 dates", () => {
+    expect(buildAvailableDates({ from: FIXED_FROM })).toHaveLength(5);
   });
 
   it("honours a custom count", () => {
-    expect(buildAvailableDates({ count: 3 })).toHaveLength(3);
+    expect(buildAvailableDates({ count: 3, from: FIXED_FROM })).toHaveLength(3);
   });
 
   it("every returned date has the required shape", () => {
-    buildAvailableDates().forEach((d) => {
+    buildAvailableDates({ from: FIXED_FROM }).forEach((d) => {
       expect(d).toHaveProperty("date");
       expect(d).toHaveProperty("label");
       expect(d).toHaveProperty("slots");
@@ -89,29 +90,29 @@ describe("buildAvailableDates", () => {
   });
 
   it("skips weekends — no date falls on Saturday or Sunday", () => {
-    buildAvailableDates({ count: 10 }).forEach((d) => {
-      const dow = new Date(d.date + "T00:00:00").getDay();
+    // Span 10 weekdays from a known Monday to cover at least 2 weekends
+    buildAvailableDates({ count: 10, from: FIXED_FROM }).forEach((d) => {
+      // Parse at noon local time to avoid UTC midnight boundary shift
+      const dow = new Date(d.date + "T12:00:00").getDay();
       expect(dow).not.toBe(0); // Sunday
       expect(dow).not.toBe(6); // Saturday
     });
   });
 
-  it("all dates are after the `from` reference date", () => {
-    const from = new Date("2030-01-01T00:00:00");
-    buildAvailableDates({ from }).forEach((d) => {
-      expect(new Date(d.date + "T00:00:00") > from).toBe(true);
+  it("all dates are strictly after the from date", () => {
+    buildAvailableDates({ from: FIXED_FROM }).forEach((d) => {
+      expect(new Date(d.date + "T12:00:00") > FIXED_FROM).toBe(true);
     });
   });
 
-  it("dates are in ascending (chronological) order", () => {
-    const dates = buildAvailableDates().map((d) => d.date);
-    const sorted = [...dates].sort();
-    expect(dates).toEqual(sorted);
+  it("dates are in ascending chronological order", () => {
+    const dates = buildAvailableDates({ from: FIXED_FROM }).map((d) => d.date);
+    expect(dates).toEqual([...dates].sort());
   });
 
   it("uses custom slots when provided", () => {
     const custom = ["10:00", "15:00"];
-    buildAvailableDates({ slots: custom }).forEach((d) => {
+    buildAvailableDates({ slots: custom, from: FIXED_FROM }).forEach((d) => {
       d.slots.forEach((s) => expect(custom).toContain(s));
     });
   });
@@ -159,14 +160,11 @@ describe("submitAppointment", () => {
   it("resolves with { success: true } for a valid payload", async () => {
     const promise = submitAppointment(VALID);
     await vi.runAllTimersAsync();
-    const result = await promise;
-    expect(result).toEqual({ success: true });
+    expect(await promise).toEqual({ success: true });
   });
 
   it("rejects when firstName is missing", async () => {
     const promise = submitAppointment({ ...VALID, firstName: "" });
-    // Attach a no-op catch immediately so the rejection is always handled,
-    // then advance timers and verify via expect().rejects
     promise.catch(() => {});
     await vi.runAllTimersAsync();
     await expect(promise).rejects.toThrow("Missing required fields");

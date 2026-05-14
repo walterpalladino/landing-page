@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { CLIENTS, STATS } from "../../../services/contentService";
 import "./ClientsSection.css";
 
@@ -14,7 +15,12 @@ export default function ClientsSection() {
 
         <div className="clients__grid">
           {CLIENTS.map((client) => (
-            <div className="client-card" key={client.id}>
+            <Link
+              key={client.id}
+              to={`/clients/${client.slug}`}
+              className="client-card"
+              aria-label={`View case study for ${client.name}`}
+            >
               <img
                 src={client.logo}
                 alt={client.name}
@@ -22,7 +28,8 @@ export default function ClientsSection() {
                 loading="lazy"
               />
               <span className="client-card__name">{client.name}</span>
-            </div>
+              <span className="client-card__industry">{client.industry}</span>
+            </Link>
           ))}
         </div>
 

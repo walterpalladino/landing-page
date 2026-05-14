@@ -61,11 +61,16 @@ export function buildAvailableDates({
   const dates  = [];
   const cursor = new Date(from);
   cursor.setDate(cursor.getDate() + 1);           // start tomorrow
+  cursor.setHours(12, 0, 0, 0);                   // noon — avoids UTC midnight shift
 
   while (dates.length < count) {
     const dow = cursor.getDay();
     if (dow !== 0 && dow !== 6) {                 // skip weekends
-      const iso = cursor.toISOString().split("T")[0];
+      // Pad month/day manually so we always get local date, not UTC date
+      const y  = cursor.getFullYear();
+      const m  = String(cursor.getMonth() + 1).padStart(2, "0");
+      const d  = String(cursor.getDate()).padStart(2, "0");
+      const iso = `${y}-${m}-${d}`;
       dates.push({
         date:  iso,
         label: formatDateLabel(iso),

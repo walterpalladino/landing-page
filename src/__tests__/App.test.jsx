@@ -53,6 +53,16 @@ describe("App routes (integration)", () => {
     expect(screen.getByRole("heading", { level: 1, name: /We are Meridian/i })).toBeInTheDocument();
   });
 
+  it("renders ClientDetailPage on /clients/:slug", () => {
+    setup("/clients/apex-industries");
+    expect(screen.getByRole("heading", { level: 1, name: "Apex Industries" })).toBeInTheDocument();
+  });
+
+  it("renders 404 on unknown client slug", () => {
+    setup("/clients/nonexistent");
+    expect(screen.getByText(/Client not found/i)).toBeInTheDocument();
+  });
+
   it("renders ServiceDetailPage on /services/:slug", () => {
     setup("/services/brand-strategy");
     expect(screen.getByRole("heading", { level: 1, name: "Brand Strategy" })).toBeInTheDocument();

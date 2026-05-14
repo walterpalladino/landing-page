@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   HOME_SECTIONS,
   NAV_LINKS, PAGE_LINKS, SERVICES, CLIENTS, SOCIAL_LINKS, STATS,
-  ABOUT, getServiceBySlug, getActiveNavLinks,
+  ABOUT, getServiceBySlug, getActiveNavLinks, getClientBySlug,
 } from "../contentService";
 
 describe("HOME_SECTIONS", () => {
@@ -219,16 +219,86 @@ describe("getServiceBySlug", () => {
 
 describe("CLIENTS", () => {
   it("contains exactly 8 clients", () => expect(CLIENTS).toHaveLength(8));
-  it("every client has id, name, and picsum logo", () => {
+
+  it("every client has all required fields", () => {
     CLIENTS.forEach((c) => {
       expect(c.id).toBeDefined();
+      expect(c.slug).toBeTruthy();
       expect(c.name).toBeTruthy();
+      expect(c.industry).toBeTruthy();
+      expect(c.tagline).toBeTruthy();
       expect(c.logo).toContain("picsum.photos");
+      expect(c.image).toContain("picsum.photos");
+      expect(c.imageSplit).toContain("picsum.photos");
+      expect(c.overview.length).toBeGreaterThan(20);
     });
   });
+
+  it("every client has at least 1 service", () => {
+    CLIENTS.forEach((c) => expect(c.services.length).toBeGreaterThan(0));
+  });
+
+  it("every client has exactly 4 stats with num and label", () => {
+    CLIENTS.forEach((c) => {
+      expect(c.stats).toHaveLength(4);
+      c.stats.forEach((s) => {
+        expect(s.num).toBeTruthy();
+        expect(s.label).toBeTruthy();
+      });
+    });
+  });
+
+  it("every client has a testimonial with quote, author, and role", () => {
+    CLIENTS.forEach((c) => {
+      expect(c.testimonial.quote).toBeTruthy();
+      expect(c.testimonial.author).toBeTruthy();
+      expect(c.testimonial.role).toBeTruthy();
+    });
+  });
+
+  it("every client has exactly 3 gallery images", () => {
+    CLIENTS.forEach((c) => {
+      expect(c.imageGallery).toHaveLength(3);
+      c.imageGallery.forEach((img) => expect(img).toContain("picsum.photos"));
+    });
+  });
+
+  it("every client has at least 1 deliverable", () => {
+    CLIENTS.forEach((c) => expect(c.deliverables.length).toBeGreaterThan(0));
+  });
+
+  it("slugs are unique", () => {
+    const slugs = CLIENTS.map((c) => c.slug);
+    expect(new Set(slugs).size).toBe(slugs.length);
+  });
+
   it("client ids are unique", () => {
     const ids = CLIENTS.map((c) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("slugs contain only lowercase letters, digits, and hyphens", () => {
+    CLIENTS.forEach((c) => expect(c.slug).toMatch(/^[a-z0-9-]+$/));
+  });
+});
+
+describe("getClientBySlug", () => {
+  it("returns the correct client for a known slug", () => {
+    const client = getClientBySlug("apex-industries");
+    expect(client).toBeDefined();
+    expect(client.name).toBe("Apex Industries");
+  });
+
+  it("returns undefined for an unknown slug", () => {
+    expect(getClientBySlug("does-not-exist")).toBeUndefined();
+  });
+
+  it("returns the right client for every slug in CLIENTS", () => {
+    CLIENTS.forEach((c) => {
+      const found = getClientBySlug(c.slug);
+      expect(found).toBeDefined();
+      expect(found.id).toBe(c.id);
+    });
   });
 });
 

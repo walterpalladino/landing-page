@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { Navbar, Footer, ScrollToTop } from "./components/common";
-import { HomePage, AppointmentPage, ServiceDetailPage, AboutPage } from "./pages";
+import { HomePage, AppointmentPage, ServiceDetailPage, ClientDetailPage, AboutPage } from "./pages";
 
 export default function AppRoutes() {
   return (
@@ -12,6 +12,7 @@ export default function AppRoutes() {
         <Route path="/about"            element={<AboutPage />}         />
         <Route path="/appointment"      element={<AppointmentPage />}   />
         <Route path="/services/:slug"   element={<ServiceDetailPage />} />
+        <Route path="/clients/:slug"    element={<ClientDetailPage />}  />
       </Routes>
       <Footer />
     </>

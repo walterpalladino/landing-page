@@ -22,7 +22,9 @@ A production-ready landing page built with **React 19** and **Vite**, featuring 
 | Route | Component | Description |
 |---|---|---|
 | `/` | `HomePage` | Landing page with Hero, Services, Clients, and Contact sections |
+| `/about` | `AboutPage` | Studio story, values, and team |
 | `/services/:slug` | `ServiceDetailPage` | Full detail page for each service |
+| `/clients/:slug` | `ClientDetailPage` | Case study page for each client |
 | `/appointment` | `AppointmentPage` | Appointment booking form |
 
 ### Service slugs
@@ -35,6 +37,19 @@ A production-ready landing page built with **React 19** and **Vite**, featuring 
 | `growth-marketing` | Growth Marketing |
 | `systems-tech` | Systems & Tech |
 | `editorial-content` | Editorial Content |
+
+### Client slugs
+
+| Slug | Client |
+|---|---|
+| `apex-industries` | Apex Industries |
+| `nomad-studio` | Nomad Studio |
+| `verto-capital` | Verto Capital |
+| `solaris-health` | Solaris Health |
+| `rift-media` | Rift Media |
+| `basalt-group` | Basalt Group |
+| `fennec-labs` | Fennec Labs |
+| `crest-ventures` | Crest Ventures |
 
 ---
 
@@ -76,6 +91,9 @@ src/
 │   ├── ServiceDetail/          # Service detail page
 │   │   ├── __tests__/
 │   │   └── ServiceDetailPage.jsx
+│   ├── ClientDetail/           # Client case study page
+│   │   ├── __tests__/
+│   │   └── ClientDetailPage.jsx
 │   └── Appointment/            # Appointment booking page
 │       ├── __tests__/
 │       └── AppointmentPage.jsx
@@ -146,22 +164,83 @@ npm run test:watch
 npm run test:coverage
 ```
 
-The suite contains **252 tests across 25 files**, co-located with their source under `__tests__/` folders.
+The suite contains **357 tests across 27 files**, co-located with their source under `__tests__/` folders.
 
 ### Test coverage by area
 
 | Area | Files | What's tested |
 |---|---|---|
-| App routes | 1 | Home, `/services/:slug`, `/appointment`, 404 |
+| App routes | 1 | Home, `/about`, `/services/:slug`, `/clients/:slug`, `/appointment`, 404s |
 | `ServiceDetailPage` | 1 | All 6 slugs, hero, highlights, deliverables, gallery, related cards, 404 fallback |
-| `HomePage` | 1 | All four sections present |
-| Home sections | 4 | Hero CTAs, service card links, client stats, contact form flow |
+| `ClientDetailPage` | 1 | All 8 slugs, hero, stats, testimonial, gallery, deliverables, related cards, 404 fallback |
+| `HomePage` | 1 | All four sections present, section toggle flags |
+| Home sections | 4 | Hero CTAs, service/client card links, client stats, contact form flow |
+| `AboutPage` | 1 | Hero, story, values, team, CTA |
 | `AppointmentPage` | 1 | Loading/error/ready states, slot selection, submission, success, reset |
-| Common components | 3 | Navbar (scroll, mobile menu), Footer, ScrollToTop |
-| UI components | 6 | Button (all variants + `to`/`href`/`onClick`), Input, Select, Textarea, TimeSlotPicker |
+| Common components | 3 | Navbar (scroll, mobile menu, section-driven links), Footer, ScrollToTop |
+| UI components | 6 | Button, Input, Select, Textarea, TimeSlotPicker, DatePicker |
 | Hooks | 4 | `useScrolled`, `useForm`, `useScrollToTop`, `useAvailableDates` |
-| Services | 2 | `contentService` data & `getServiceBySlug`, `appointmentService` all exports |
+| Services | 2 | `contentService` (all exports incl. `getClientBySlug`), `appointmentService` |
 | Utils | 2 | `validators`, `formatters` |
+
+---
+
+## Client Detail Page
+
+Each client card on the home page links to a full case study page at `/clients/:slug`.
+
+### Page sections
+
+| Section | Content |
+|---|---|
+| **Hero banner** | Full-bleed image, client name, industry label, italic tagline, Back button |
+| **Overview** | Project description, services delivered as tags, split image, "Start your project" CTA |
+| **Stats** | Four-column dark grid — key numbers from the engagement |
+| **Testimonial** | Full-width centred quote with author attribution |
+| **Gallery** | Three-image strip with hover colour-reveal effect |
+| **Deliverables** | Two-column checklist of what was produced |
+| **CTA band** | Accent-coloured band with "Set an Appointment" and "Send a message" |
+| **Related clients** | Three cards linking to other case study pages |
+
+### Adding or editing a client
+
+All client content lives in `src/services/contentService.js` inside the `CLIENTS` array. Each entry follows this shape:
+
+```js
+{
+  id:       1,
+  slug:     "apex-industries",          // URL segment — lowercase, hyphens only
+  name:     "Apex Industries",
+  industry: "Manufacturing & Engineering",
+  tagline:  "Short hero italic line.",
+  logo:     "https://picsum.photos/...", // shown on home page grid
+  image:    "https://picsum.photos/...", // hero banner
+  imageSplit: "https://picsum.photos/...", // overview split image
+  imageGallery: [                        // exactly 3
+    "https://picsum.photos/...",
+    ...
+  ],
+  overview:  "Full paragraph for the Overview section.",
+  services:  ["Brand Strategy", "Digital Experience"], // tags shown on page
+  stats: [                               // exactly 4
+    { num: "102", label: "Years in business" },
+    ...
+  ],
+  testimonial: {
+    quote:  "Quote text without surrounding quotation marks.",
+    author: "Full Name",
+    role:   "Title, Company",
+  },
+  deliverables: ["Item one", "Item two", ...], // at least 1
+}
+```
+
+To look up a client by slug in code, use the exported helper:
+
+```js
+import { getClientBySlug } from "./services/contentService";
+const client = getClientBySlug("apex-industries"); // returns the object or undefined
+```
 
 ---
 
@@ -390,7 +469,10 @@ https://<your-username>.github.io/landing-page
 | Service detail content | `SERVICES[].longDescription`, `.highlights`, `.deliverables`, `.imageGallery` |
 | Add a new service | Add an entry to the `SERVICES` array — the route and card are generated automatically |
 | Remove a service | Remove the entry from `SERVICES` — the route and card disappear automatically |
-| Client logos | `CLIENTS` array in `contentService.js` |
+| Client cards (home) | `CLIENTS[].name`, `.industry`, `.logo` in `contentService.js` |
+| Client case study content | `CLIENTS[].overview`, `.stats`, `.testimonial`, `.deliverables`, `.imageGallery` |
+| Add a new client | Add an entry to the `CLIENTS` array — the route and card are generated automatically |
+| Remove a client | Remove the entry from `CLIENTS` — the route and card disappear automatically |
 | Stats row | `STATS` array in `contentService.js` |
 | Social links | `SOCIAL_LINKS` array in `contentService.js` |
 | Navigation links | `NAV_LINKS` array in `contentService.js` |
