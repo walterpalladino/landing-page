@@ -10,8 +10,6 @@ export default function AppRoutes() {
     <>
       <ScrollToTop />
       <Routes>
-        {/* ── Admin — no Navbar / Footer ── */}
-        <Route path="/admin" element={<AdminRoot />} />
 
         {/* ── Public routes — with Navbar / Footer ── */}
         <Route
@@ -25,6 +23,10 @@ export default function AppRoutes() {
                 <Route path="/appointment"    element={<AppointmentPage />}   />
                 <Route path="/services/:slug" element={<ServiceDetailPage />} />
                 <Route path="/clients/:slug"  element={<ClientDetailPage />}  />
+
+                {/* ── Admin — no Navbar / Footer ── */}
+                <Route path="/admin" element={<AdminRoot />} />
+
               </Routes>
               <Footer />
             </>
