@@ -48,6 +48,18 @@ describe("App routes (integration)", () => {
     expect(screen.getByRole("heading", { name: /Book a session/i })).toBeInTheDocument();
   });
 
+  it("renders the login page on /admin", () => {
+    setup("/admin");
+    expect(screen.getByRole("heading", { name: /Admin Access/i })).toBeInTheDocument();
+  });
+
+  it("/admin does not render the public Navbar", () => {
+    setup("/admin");
+    // The public Navbar has MERIDIAN logo; admin login page doesn't use it
+    // Admin login card has its own brand, Navbar should not be present
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+  });
+
   it("renders AboutPage on /about", () => {
     setup("/about");
     expect(screen.getByRole("heading", { level: 1, name: /We are Meridian/i })).toBeInTheDocument();

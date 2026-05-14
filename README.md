@@ -26,6 +26,7 @@ A production-ready landing page built with **React 19** and **Vite**, featuring 
 | `/services/:slug` | `ServiceDetailPage` | Full detail page for each service |
 | `/clients/:slug` | `ClientDetailPage` | Case study page for each client |
 | `/appointment` | `AppointmentPage` | Appointment booking form |
+| `/admin` | `AdminRoot` | Password-protected admin area (no public Navbar/Footer) |
 
 ### Service slugs
 
@@ -78,7 +79,8 @@ src/
 │   ├── useScrolled.js          # Tracks scroll position for Navbar
 │   ├── useScrollToTop.js       # Scrolls to top on route change
 │   ├── useForm.js              # Controlled-form state management
-│   └── useAvailableDates.js    # Fetches available slots from appointmentService
+│   ├── useAvailableDates.js    # Fetches available slots from appointmentService
+│   └── useAuth.js             # Admin login/logout state with sessionStorage persistence
 ├── pages/
 │   ├── Home/                   # HomePage + four page sections
 │   │   ├── sections/
@@ -97,10 +99,16 @@ src/
 │   └── Appointment/            # Appointment booking page
 │       ├── __tests__/
 │       └── AppointmentPage.jsx
+│   └── Admin/                  # Password-protected admin area
+│       ├── __tests__/
+│       ├── AdminRoot.jsx        # Switches between Login and Admin
+│       ├── LoginPage.jsx        # Credential form
+│       └── AdminPage.jsx        # Sidebar + 6 content panels
 ├── services/                   # Data access & external integrations
 │   ├── __tests__/
-│   ├── contentService.js       # All copy, SERVICES, CLIENTS, getServiceBySlug()
-│   └── appointmentService.js   # Available dates/slots + appointment submission
+│   ├── contentService.js       # All copy, SERVICES, CLIENTS, getServiceBySlug(), getClientBySlug()
+│   ├── appointmentService.js   # Available dates/slots + appointment submission
+│   └── authService.js         # Admin credential validation + session key
 ├── store/                      # Global state (Zustand / Redux / Context)
 ├── utils/                      # Pure helpers
 │   ├── __tests__/
@@ -164,23 +172,26 @@ npm run test:watch
 npm run test:coverage
 ```
 
-The suite contains **357 tests across 27 files**, co-located with their source under `__tests__/` folders.
+The suite contains **424 tests across 32 files**, co-located with their source under `__tests__/` folders.
 
 ### Test coverage by area
 
 | Area | Files | What's tested |
 |---|---|---|
-| App routes | 1 | Home, `/about`, `/services/:slug`, `/clients/:slug`, `/appointment`, 404s |
-| `ServiceDetailPage` | 1 | All 6 slugs, hero, highlights, deliverables, gallery, related cards, 404 fallback |
-| `ClientDetailPage` | 1 | All 8 slugs, hero, stats, testimonial, gallery, deliverables, related cards, 404 fallback |
+| App routes | 1 | All public routes, `/admin` login page, no Navbar on `/admin` |
+| `AdminRoot` | 1 | Renders Login when unauthenticated, Admin when authenticated |
+| `LoginPage` | 1 | Layout, disabled states, error display, form submission payload |
+| `AdminPage` | 1 | Sidebar nav, panel switching, breadcrumb, logout callback |
+| `ServiceDetailPage` | 1 | All 6 slugs, hero, highlights, deliverables, gallery, related cards, 404 |
+| `ClientDetailPage` | 1 | All 8 slugs, hero, stats, testimonial, gallery, deliverables, related, 404 |
 | `HomePage` | 1 | All four sections present, section toggle flags |
 | Home sections | 4 | Hero CTAs, service/client card links, client stats, contact form flow |
 | `AboutPage` | 1 | Hero, story, values, team, CTA |
 | `AppointmentPage` | 1 | Loading/error/ready states, slot selection, submission, success, reset |
 | Common components | 3 | Navbar (scroll, mobile menu, section-driven links), Footer, ScrollToTop |
 | UI components | 6 | Button, Input, Select, Textarea, TimeSlotPicker, DatePicker |
-| Hooks | 4 | `useScrolled`, `useForm`, `useScrollToTop`, `useAvailableDates` |
-| Services | 2 | `contentService` (all exports incl. `getClientBySlug`), `appointmentService` |
+| Hooks | 5 | `useScrolled`, `useForm`, `useScrollToTop`, `useAvailableDates`, `useAuth` |
+| Services | 3 | `contentService`, `appointmentService`, `authService` |
 | Utils | 2 | `validators`, `formatters` |
 
 ---
@@ -293,6 +304,72 @@ To look up a service by slug in code, use the exported helper:
 import { getServiceBySlug } from "./services/contentService";
 const service = getServiceBySlug("brand-strategy"); // returns the object or undefined
 ```
+
+---
+
+## Admin Area
+
+The admin area is accessible at `/admin` and is completely separate from the public site — it renders without the public `<Navbar>` or `<Footer>`.
+
+### Accessing the admin area
+
+Navigate directly to:
+
+```
+http://localhost:5173/admin          # local dev
+https://walterpalladino.github.io/landing-page/admin   # deployed
+```
+
+The page is not linked anywhere in the public navigation.
+
+### Default credentials
+
+```
+Username: admin
+Password: meridian2024
+```
+
+> **Change these before deploying to production.** See `src/services/authService.js`.
+
+### Authentication flow
+
+`AdminRoot` reads from `useAuth`, which calls `authService.validateCredentials()`. On success the session is stored in `sessionStorage` (survives page refreshes within the same tab, cleared when the tab closes). On logout the session is cleared and the login form is shown again.
+
+To connect a real backend, replace `validateCredentials` in `authService.js`:
+
+```js
+// Before (fixed credentials)
+export async function validateCredentials({ username, password }) {
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  if (username === "admin" && password === "meridian2024") {
+    return { success: true };
+  }
+  return { success: false, error: "Invalid username or password." };
+}
+
+// After (real API)
+export async function validateCredentials({ username, password }) {
+  const res = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  return res.json(); // expects { success: boolean, error?: string }
+}
+```
+
+### Admin sidebar sections
+
+| Section | Description |
+|---|---|
+| **General Settings** | Studio name, tagline, SEO metadata |
+| **Services** | Add, edit, remove service entries |
+| **Clients** | Add, edit, remove client case studies |
+| **Contact** | Email, phone, and location details |
+| **About Us** | Story paragraphs, values, and team members |
+| **Appointments** | Incoming requests and available time slots |
+
+Each section currently shows a placeholder panel. Content editors will be built out per section in future iterations.
 
 ---
 

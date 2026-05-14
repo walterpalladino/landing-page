@@ -3,3 +3,4 @@ export { AppointmentPage    } from "./Appointment";
 export { ServiceDetailPage  } from "./ServiceDetail";
 export { ClientDetailPage   } from "./ClientDetail";
 export { AboutPage          } from "./About";
+export { AdminRoot          } from "./Admin";
