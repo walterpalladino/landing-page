@@ -1,6 +1,3 @@
-
-import { Link } from "react-router-dom";
-
 import { NAV_LINKS, SOCIAL_LINKS } from "../../services/contentService";
 import { currentYear } from "../../utils/formatters";
 import "./Footer.css";
@@ -69,7 +66,6 @@ export default function Footer() {
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Use</a>
             <a href="#">Cookies</a>
-            <Link to="/admin">Admin</Link>
           </div>
         </div>
       </div>
