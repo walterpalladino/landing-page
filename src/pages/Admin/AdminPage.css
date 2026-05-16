@@ -216,3 +216,50 @@
   .admin-main__header { padding: 14px 20px; }
   .admin-main__content { padding: 24px 20px; }
 }
+
+/* ── Appointments sub-navigation ─────────────────────── */
+.admin-panel--full {
+  max-width: 100%;
+}
+
+.admin-panel__sub-nav {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+
+.admin-panel__sub-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 10px 22px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  color: var(--muted);
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: -1px;
+}
+.admin-panel__sub-btn:hover {
+  color: var(--ink);
+}
+.admin-panel__sub-btn--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.admin-panel__sub-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-panel__sub-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 680px;
+}

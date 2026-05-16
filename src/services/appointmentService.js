@@ -115,3 +115,155 @@ export async function submitAppointment(payload) {
 
   return { success: true };
 }
+
+// ─────────────────────────────────────────────────────────
+// Admin-facing appointment utilities
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Returns a local ISO date string (YYYY-MM-DD) for a given Date, at noon
+ * to avoid UTC boundary shifts.
+ */
+export function toLocalISO(date) {
+  const d = new Date(date);
+  d.setHours(12, 0, 0, 0);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Builds 14 calendar days (including weekends) starting from today
+ * for the availability editor.
+ *
+ * @param {Date} [from=new Date()] Reference date
+ * @returns {{ date: string, label: string, isWeekend: boolean }[]}
+ */
+export function buildAvailabilityWindow({ from = new Date() } = {}) {
+  const days = [];
+  const cursor = new Date(from);
+  cursor.setHours(12, 0, 0, 0);
+
+  for (let i = 0; i < 14; i++) {
+    const iso = toLocalISO(cursor);
+    const dow = cursor.getDay();
+    days.push({
+      date:      iso,
+      label:     formatDateLabel(iso),
+      isWeekend: dow === 0 || dow === 6,
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return days;
+}
+
+/**
+ * Fetches the current admin-configured availability.
+ * Returns a map: { "YYYY-MM-DD": Set<string> } of enabled slots.
+ *
+ * In production replace with a real API call.
+ *
+ * @returns {Promise<Record<string, string[]>>}
+ */
+export async function getAvailabilityGrid() {
+  await new Promise((r) => setTimeout(r, 200));
+  // Seed with the same simulated data as buildAvailableDates
+  const window14 = buildAvailabilityWindow();
+  const result = {};
+  window14.forEach(({ date, isWeekend }) => {
+    if (!isWeekend) {
+      result[date] = computeAvailableSlots(date, ALL_TIME_SLOTS);
+    } else {
+      result[date] = [];
+    }
+  });
+  return result;
+}
+
+/**
+ * Persists the admin's availability configuration.
+ *
+ * @param {Record<string, string[]>} grid  Map of date → enabled slot array
+ * @returns {Promise<{ success: boolean }>}
+ */
+export async function saveAvailability(grid) {
+  await new Promise((r) => setTimeout(r, 300));
+  // In production: POST to your API
+  console.info("[appointmentService] availability saved", grid);
+  return { success: true };
+}
+
+/**
+ * Builds all 7 calendar days of the week containing `referenceDate`.
+ * Week starts on Monday.
+ *
+ * @param {Date} referenceDate
+ * @returns {{ date: string, label: string, isWeekend: boolean }[]}
+ */
+export function buildWeekDates(referenceDate = new Date()) {
+  const d = new Date(referenceDate);
+  d.setHours(12, 0, 0, 0);
+  // Move to Monday of this week
+  const dow = d.getDay(); // 0=Sun … 6=Sat
+  const diffToMonday = dow === 0 ? -6 : 1 - dow;
+  d.setDate(d.getDate() + diffToMonday);
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(d);
+    day.setDate(day.getDate() + i);
+    const iso = toLocalISO(day);
+    const dayDow = day.getDay();
+    return {
+      date:      iso,
+      label:     formatDateLabel(iso),
+      isWeekend: dayDow === 0 || dayDow === 6,
+    };
+  });
+}
+
+/**
+ * Sample appointment records used to seed the appointments view.
+ * In production replace with a real API call.
+ */
+const SAMPLE_APPOINTMENTS = (() => {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  // Build a week of sample data anchored to this week's Monday
+  const week = buildWeekDates(today);
+  const names = [
+    ["Alice",  "Morgan",  "alice@example.com"],
+    ["Bob",    "Chen",    "bob@example.com"  ],
+    ["Carmen", "Reyes",   "c.reyes@corp.com" ],
+    ["David",  "Osei",    "dosei@mail.net"   ],
+    ["Elena",  "Müller",  "elena.m@work.com" ],
+  ];
+  const slots = ["09:00", "10:30", "14:00", "15:30", "11:00"];
+  return week
+    .filter((d) => !d.isWeekend)
+    .slice(0, 5)
+    .map((day, i) => ({
+      id:        i + 1,
+      date:      day.date,
+      slot:      slots[i],
+      firstName: names[i][0],
+      lastName:  names[i][1],
+      email:     names[i][2],
+      phone:     "+1 555 000 000" + i,
+      status:    i % 3 === 0 ? "confirmed" : i % 3 === 1 ? "pending" : "confirmed",
+    }));
+})();
+
+/**
+ * Fetches appointments for a given week.
+ *
+ * @param {Date} referenceDate  Any date within the desired week
+ * @returns {Promise<Array>}
+ */
+export async function getAppointments(referenceDate = new Date()) {
+  await new Promise((r) => setTimeout(r, 200));
+  const week = buildWeekDates(referenceDate);
+  const weekDates = new Set(week.map((d) => d.date));
+  // In production: fetch from API filtered by week
+  return SAMPLE_APPOINTMENTS.filter((a) => weekDates.has(a.date));
+}

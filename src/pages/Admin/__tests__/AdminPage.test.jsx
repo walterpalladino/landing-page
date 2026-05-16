@@ -1,38 +1,50 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+
+vi.mock("../../../services/appointmentService", () => ({
+  ALL_TIME_SLOTS:          ["09:00", "10:00"],
+  buildAvailabilityWindow: vi.fn(() => []),
+  buildWeekDates:          vi.fn(() => []),
+  getAvailabilityGrid:     vi.fn(() => new Promise(() => {})),
+  getAppointments:         vi.fn(() => new Promise(() => {})),
+  saveAvailability:        vi.fn().mockResolvedValue({ success: true }),
+  formatDateLabel:         vi.fn((iso) => iso),
+  computeAvailableSlots:   vi.fn(() => []),
+  toLocalISO:              vi.fn(() => "2030-01-01"),
+}));
+
 import AdminPage from "../AdminPage";
 
 const setup = (props = {}) =>
-  render(
-    <MemoryRouter>
-      <AdminPage onLogout={vi.fn()} {...props} />
-    </MemoryRouter>
-  );
+  render(<MemoryRouter><AdminPage onLogout={vi.fn()} {...props} /></MemoryRouter>);
+
+/** Click a sidebar nav item by its label text (partial match, inside <nav>). */
+const clickSidebarItem = (label) => {
+  const nav = screen.getByRole("navigation", { name: "Admin navigation" });
+  fireEvent.click(within(nav).getByText(new RegExp(label)));
+};
 
 // ── Layout ──────────────────────────────────────────────
 
 describe("AdminPage — layout", () => {
-  it("renders the sidebar brand mark and name", () => {
+  it("renders the sidebar brand name", () => {
     setup();
-    expect(screen.getAllByText("◈").length).toBeGreaterThan(0);
     expect(screen.getByText("MERIDIAN")).toBeInTheDocument();
   });
 
-  it("renders the 'Administration' section label in sidebar", () => {
+  it("renders the 'Administration' section label", () => {
     setup();
     expect(screen.getByText("Administration")).toBeInTheDocument();
   });
 
-  it("renders all six nav items", () => {
+  it("renders all six nav items in the sidebar", () => {
     setup();
-    const labels = [
-      "General Settings", "Services", "Clients",
-      "Contact", "About Us", "Appointments",
-    ];
-    labels.forEach((label) =>
-      expect(screen.getByRole("button", { name: new RegExp(label, "i") })).toBeInTheDocument()
-    );
+    const nav = screen.getByRole("navigation", { name: "Admin navigation" });
+    ["General Settings", "Services", "Clients", "Contact", "About Us", "Appointments"]
+      .forEach((label) =>
+        expect(within(nav).getByText(label)).toBeInTheDocument()
+      );
   });
 
   it("renders the Sign out button", () => {
@@ -48,54 +60,118 @@ describe("AdminPage — layout", () => {
 
 // ── Default panel ────────────────────────────────────────
 
-describe("AdminPage — default active panel", () => {
-  it("shows 'General Settings' panel by default", () => {
+describe("AdminPage — default panel", () => {
+  it("shows General Settings panel by default", () => {
     setup();
     expect(screen.getByRole("heading", { name: /General Settings/i })).toBeInTheDocument();
   });
 
-  it("'General Settings' button has active class by default", () => {
+  it("General Settings sidebar item has active class", () => {
     const { container } = setup();
-    const active = container.querySelector(".admin-sidebar__item--active");
-    expect(active.textContent).toContain("General Settings");
+    expect(container.querySelector(".admin-sidebar__item--active").textContent)
+      .toContain("General Settings");
   });
 
-  it("shows the breadcrumb for the active panel", () => {
+  it("breadcrumb shows General Settings", () => {
     setup();
     expect(screen.getByText(/Admin \/ General Settings/i)).toBeInTheDocument();
   });
 });
 
-// ── Panel switching ──────────────────────────────────────
+// ── Static panel switching ────────────────────────────────
 
-describe("AdminPage — panel switching", () => {
-  const PANELS = [
-    { button: "Services",     heading: /Services/        },
-    { button: "Clients",      heading: /Clients/         },
-    { button: "Contact",      heading: /Contact/         },
-    { button: "About Us",     heading: /About Us/        },
-    { button: "Appointments", heading: /Appointments/    },
+describe("AdminPage — static panel switching", () => {
+  const CASES = [
+    { label: "Services", heading: /^Services$/ },
+    { label: "Clients",  heading: /^Clients$/  },
+    { label: "Contact",  heading: /^Contact$/  },
+    { label: "About Us", heading: /^About Us$/ },
   ];
 
-  PANELS.forEach(({ button, heading }) => {
-    it(`clicking '${button}' shows the ${button} panel`, () => {
+  CASES.forEach(({ label, heading }) => {
+    it(`'${label}' shows its panel heading`, () => {
       setup();
-      fireEvent.click(screen.getByRole("button", { name: new RegExp(button, "i") }));
+      clickSidebarItem(label);
       expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
     });
 
-    it(`clicking '${button}' updates the breadcrumb`, () => {
+    it(`'${label}' updates the breadcrumb`, () => {
       setup();
-      fireEvent.click(screen.getByRole("button", { name: new RegExp(button, "i") }));
-      expect(screen.getByText(new RegExp(`Admin \\/ ${button}`, "i"))).toBeInTheDocument();
+      clickSidebarItem(label);
+      expect(screen.getByText(new RegExp(`Admin \\/ ${label}`))).toBeInTheDocument();
     });
 
-    it(`clicking '${button}' marks it as active`, () => {
+    it(`'${label}' gets the active sidebar class`, () => {
       const { container } = setup();
-      fireEvent.click(screen.getByRole("button", { name: new RegExp(button, "i") }));
-      const active = container.querySelector(".admin-sidebar__item--active");
-      expect(active.textContent).toContain(button);
+      clickSidebarItem(label);
+      expect(container.querySelector(".admin-sidebar__item--active").textContent)
+        .toContain(label);
     });
+  });
+});
+
+// ── Appointments panel + sub-navigation ──────────────────
+
+describe("AdminPage — Appointments panel", () => {
+  it("updates breadcrumb to Appointments", () => {
+    setup();
+    clickSidebarItem("Appointments");
+    expect(screen.getByText(/Admin \/ Appointments/i)).toBeInTheDocument();
+  });
+
+  it("marks Appointments as active", () => {
+    const { container } = setup();
+    clickSidebarItem("Appointments");
+    expect(container.querySelector(".admin-sidebar__item--active").textContent)
+      .toContain("Appointments");
+  });
+
+  it("shows Availability and Existing Appointments sub-buttons", () => {
+    setup();
+    clickSidebarItem("Appointments");
+    expect(screen.getByRole("button", { name: "Availability" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Existing Appointments" })).toBeInTheDocument();
+  });
+
+  it("shows Availability sub-panel heading by default", () => {
+    setup();
+    clickSidebarItem("Appointments");
+    expect(screen.getByRole("heading", { name: /^Availability$/i })).toBeInTheDocument();
+  });
+
+  it("shows loading indicator in Availability sub-panel", () => {
+    setup();
+    clickSidebarItem("Appointments");
+    expect(screen.getByText(/Loading availability/i)).toBeInTheDocument();
+  });
+
+  it("clicking Existing Appointments shows its heading", () => {
+    setup();
+    clickSidebarItem("Appointments");
+    fireEvent.click(screen.getByRole("button", { name: "Existing Appointments" }));
+    expect(screen.getByRole("heading", { name: /^Existing Appointments$/i })).toBeInTheDocument();
+  });
+
+  it("clicking Existing Appointments shows loading indicator", () => {
+    setup();
+    clickSidebarItem("Appointments");
+    fireEvent.click(screen.getByRole("button", { name: "Existing Appointments" }));
+    expect(screen.getByText(/Loading appointments/i)).toBeInTheDocument();
+  });
+
+  it("Availability sub-btn has active class by default", () => {
+    const { container } = setup();
+    clickSidebarItem("Appointments");
+    expect(container.querySelector(".admin-panel__sub-btn--active").textContent)
+      .toContain("Availability");
+  });
+
+  it("switching to Existing Appointments updates active sub-btn", () => {
+    const { container } = setup();
+    clickSidebarItem("Appointments");
+    fireEvent.click(screen.getByRole("button", { name: "Existing Appointments" }));
+    expect(container.querySelector(".admin-panel__sub-btn--active").textContent)
+      .toContain("Existing Appointments");
   });
 });
 

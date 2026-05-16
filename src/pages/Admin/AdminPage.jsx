@@ -1,4 +1,6 @@
 import { useState } from "react";
+import AvailabilityGrid  from "./components/AvailabilityGrid";
+import AppointmentsGrid  from "./components/AppointmentsGrid";
 import "./AdminPage.css";
 
 const NAV_ITEMS = [
@@ -10,7 +12,12 @@ const NAV_ITEMS = [
   { id: "appointments", label: "Appointments"      },
 ];
 
-/* ── Placeholder panels — content will be built out per item ── */
+const APPT_SUB_ITEMS = [
+  { id: "availability",  label: "Availability"          },
+  { id: "existing",      label: "Existing Appointments" },
+];
+
+/* ── Placeholder panels ── */
 function PanelGeneral() {
   return (
     <div className="admin-panel">
@@ -91,34 +98,75 @@ function PanelAbout() {
   );
 }
 
+/* ── Appointments panel — with sub-navigation ── */
 function PanelAppointments() {
+  const [sub, setSub] = useState("availability");
+
   return (
-    <div className="admin-panel">
-      <h2 className="admin-panel__title">Appointments</h2>
-      <p className="admin-panel__desc">
-        View incoming appointment requests, configure available time slots, and
-        manage the booking calendar.
-      </p>
-      <div className="admin-panel__placeholder">
-        <span className="admin-panel__placeholder-icon">◈</span>
-        <p>Appointments manager coming soon.</p>
+    <div className="admin-panel admin-panel--full">
+      {/* Sub-menu */}
+      <div className="admin-panel__sub-nav">
+        {APPT_SUB_ITEMS.map((item) => (
+          <button
+            key={item.id}
+            className={`admin-panel__sub-btn ${sub === item.id ? "admin-panel__sub-btn--active" : ""}`}
+            onClick={() => setSub(item.id)}
+            aria-current={sub === item.id ? "page" : undefined}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
+
+      {/* Sub-panel content */}
+      {sub === "availability" && (
+        <div className="admin-panel__sub-content">
+          <div className="admin-panel__sub-header">
+            <h2 className="admin-panel__title">Availability</h2>
+            <p className="admin-panel__desc">
+              Configure which time slots are open for booking over the next two
+              weeks. Click a cell to toggle a slot, or click a date header to
+              toggle the entire day. Weekend columns are locked.
+            </p>
+          </div>
+          <AvailabilityGrid />
+        </div>
+      )}
+
+      {sub === "existing" && (
+        <div className="admin-panel__sub-content">
+          <div className="admin-panel__sub-header">
+            <h2 className="admin-panel__title">Existing Appointments</h2>
+            <p className="admin-panel__desc">
+              Browse confirmed and pending appointments by week. Use the
+              navigation arrows to move between weeks. Click any booked slot
+              to view the full appointment details.
+            </p>
+          </div>
+          <AppointmentsGrid />
+        </div>
+      )}
     </div>
   );
 }
 
-const PANELS = {
-  general:      <PanelGeneral />,
-  services:     <PanelServices />,
-  clients:      <PanelClients />,
-  contact:      <PanelContact />,
-  about:        <PanelAbout />,
-  appointments: <PanelAppointments />,
+/* ── Panel registry — note: appointments uses state so must be a component ── */
+const STATIC_PANELS = {
+  general:  <PanelGeneral  />,
+  services: <PanelServices />,
+  clients:  <PanelClients  />,
+  contact:  <PanelContact  />,
+  about:    <PanelAbout    />,
 };
 
 /* ── AdminPage ── */
 export default function AdminPage({ onLogout }) {
   const [active, setActive] = useState("general");
+
+  const getSubLabel = () => {
+    if (active !== "appointments") return null;
+    return null; // sub-label handled inside PanelAppointments
+  };
 
   return (
     <div className="admin-page">
@@ -154,15 +202,15 @@ export default function AdminPage({ onLogout }) {
       {/* ── Main content ── */}
       <main className="admin-main">
         <header className="admin-main__header">
-          <div className="admin-main__header-meta">
-            <p className="admin-main__breadcrumb">
-              Admin / {NAV_ITEMS.find((i) => i.id === active)?.label}
-            </p>
-          </div>
+          <p className="admin-main__breadcrumb">
+            Admin / {NAV_ITEMS.find((i) => i.id === active)?.label}
+          </p>
         </header>
 
         <div className="admin-main__content">
-          {PANELS[active]}
+          {active === "appointments"
+            ? <PanelAppointments />
+            : STATIC_PANELS[active]}
         </div>
       </main>
 

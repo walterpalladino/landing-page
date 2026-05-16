@@ -184,3 +184,151 @@ describe("submitAppointment", () => {
     await expect(promise).rejects.toThrow("Missing required fields");
   });
 });
+
+// ── Admin utilities ─────────────────────────────────────
+
+import {
+  toLocalISO,
+  buildAvailabilityWindow,
+  getAvailabilityGrid,
+  saveAvailability,
+  buildWeekDates,
+  getAppointments,
+} from "../appointmentService";
+
+describe("toLocalISO", () => {
+  it("returns a YYYY-MM-DD string", () => {
+    const d = new Date("2030-06-10T12:00:00");
+    expect(toLocalISO(d)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("returns 2030-06-10 for a June 10 date", () => {
+    const d = new Date("2030-06-10T12:00:00");
+    expect(toLocalISO(d)).toBe("2030-06-10");
+  });
+});
+
+describe("buildAvailabilityWindow", () => {
+  const MONDAY = new Date("2030-01-07T12:00:00");
+
+  it("returns exactly 14 entries", () => {
+    expect(buildAvailabilityWindow({ from: MONDAY })).toHaveLength(14);
+  });
+
+  it("every entry has date, label, isWeekend", () => {
+    buildAvailabilityWindow({ from: MONDAY }).forEach((d) => {
+      expect(d).toHaveProperty("date");
+      expect(d).toHaveProperty("label");
+      expect(d).toHaveProperty("isWeekend");
+      expect(typeof d.isWeekend).toBe("boolean");
+    });
+  });
+
+  it("marks Saturdays and Sundays as weekends", () => {
+    buildAvailabilityWindow({ from: MONDAY }).forEach((d) => {
+      const dow = new Date(d.date + "T12:00:00").getDay();
+      if (dow === 0 || dow === 6) expect(d.isWeekend).toBe(true);
+      else expect(d.isWeekend).toBe(false);
+    });
+  });
+
+  it("dates are in ascending order", () => {
+    const dates = buildAvailabilityWindow({ from: MONDAY }).map((d) => d.date);
+    expect(dates).toEqual([...dates].sort());
+  });
+});
+
+describe("buildWeekDates", () => {
+  const WEDNESDAY = new Date("2030-01-09T12:00:00"); // Wed
+
+  it("returns exactly 7 days", () => {
+    expect(buildWeekDates(WEDNESDAY)).toHaveLength(7);
+  });
+
+  it("starts on Monday regardless of reference day", () => {
+    const week = buildWeekDates(WEDNESDAY);
+    expect(new Date(week[0].date + "T12:00:00").getDay()).toBe(1); // Monday
+  });
+
+  it("ends on Sunday", () => {
+    const week = buildWeekDates(WEDNESDAY);
+    expect(new Date(week[6].date + "T12:00:00").getDay()).toBe(0); // Sunday
+  });
+
+  it("marks Sat and Sun as weekend", () => {
+    const week = buildWeekDates(WEDNESDAY);
+    expect(week[5].isWeekend).toBe(true); // Saturday
+    expect(week[6].isWeekend).toBe(true); // Sunday
+  });
+
+  it("dates are in ascending order", () => {
+    const dates = buildWeekDates(WEDNESDAY).map((d) => d.date);
+    expect(dates).toEqual([...dates].sort());
+  });
+});
+
+describe("getAvailabilityGrid", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("resolves to an object with 14 keys", async () => {
+    const p = getAvailabilityGrid();
+    await vi.runAllTimersAsync();
+    const grid = await p;
+    expect(Object.keys(grid)).toHaveLength(14);
+  });
+
+  it("each key is a YYYY-MM-DD string", async () => {
+    const p = getAvailabilityGrid();
+    await vi.runAllTimersAsync();
+    const grid = await p;
+    Object.keys(grid).forEach((k) => expect(k).toMatch(/^\d{4}-\d{2}-\d{2}$/));
+  });
+
+  it("each value is an array of strings", async () => {
+    const p = getAvailabilityGrid();
+    await vi.runAllTimersAsync();
+    const grid = await p;
+    Object.values(grid).forEach((slots) => {
+      expect(Array.isArray(slots)).toBe(true);
+      slots.forEach((s) => expect(typeof s).toBe("string"));
+    });
+  });
+});
+
+describe("saveAvailability", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("resolves with { success: true }", async () => {
+    const p = saveAvailability({ "2030-01-08": ["09:00", "10:00"] });
+    await vi.runAllTimersAsync();
+    expect(await p).toEqual({ success: true });
+  });
+});
+
+describe("getAppointments", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("resolves to an array", async () => {
+    const p = getAppointments(new Date("2030-01-07T12:00:00"));
+    await vi.runAllTimersAsync();
+    expect(Array.isArray(await p)).toBe(true);
+  });
+
+  it("every appointment has required fields", async () => {
+    const p = getAppointments(new Date());
+    await vi.runAllTimersAsync();
+    const appts = await p;
+    appts.forEach((a) => {
+      expect(a).toHaveProperty("id");
+      expect(a).toHaveProperty("date");
+      expect(a).toHaveProperty("slot");
+      expect(a).toHaveProperty("firstName");
+      expect(a).toHaveProperty("lastName");
+      expect(a).toHaveProperty("email");
+      expect(a).toHaveProperty("status");
+    });
+  });
+});
